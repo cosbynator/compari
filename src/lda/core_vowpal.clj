@@ -3,6 +3,7 @@
 (require '[clojure.java.io :as io])
 (require '[clojure.string :as string])
 (require '[multiset.core :as ms])
+(import '(com.google.common.collect ImmutableMultiset HashMultiset Multiset))
 
 (defn index-map [sequence] (apply hash-map (apply concat (map-indexed #(vector %2 %1) sequence))))
 

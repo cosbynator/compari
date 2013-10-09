@@ -43,6 +43,13 @@
     )
   )
 
-(defn wiki-dump-pages [filename] (page-seq (bzip2-reader filename)))
+(defn file-reader ^java.io.Reader [^String file]
+  (cond
+    (.endsWith file ".bz2") (bzip2-reader file)
+    :else (io/reader file)
+  )
+ )
+
+(defn wiki-dump-pages [filename] (page-seq (file-reader filename)))
 
 

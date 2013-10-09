@@ -8,7 +8,7 @@
   (testing "FIXME, I fail."
     (is (= {"a" 0, "b" 1, "c" 2} (index-map some-sequence)))))
 
-(deftest test-text-from-ids
+(deftest test-seq-counts
   (testing "Could not get id counts from text")
     (is (= {0 3, 1 1} (seq-counts (map {"a" 0, "b" 1} ["a" "a" "b" "a"]))))
   )

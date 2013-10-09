@@ -11,6 +11,7 @@
                   }]
                 ]
   :dependencies [
+                  [com.google.guava/guava "15.0"]
                   [org.clojure/clojure "1.5.1"]
                   [org.clojure/data.xml "0.0.7"]
                   [org.clojars.achim/multiset "0.1.0-SNAPSHOT"]

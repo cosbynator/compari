@@ -57,7 +57,7 @@
 )
 
 (defn write-word-counts [input-path output-path]
-  (save-counts output-path (sort-by #(- (get % 1)) (seq-counts (apply concat (pmap page-words (wiki-dump-pages input-path)))))))
+  (save-counts output-path (sort-by #(- (get % 1)) (seq-counts (mapcat identity (pmap page-words (wiki-dump-pages input-path)))))))
 
 ;(defn write-wiki-words [wiki-file out-file]
 ;  (with-open [^java.io.Writer w (io/writer out-file)]

@@ -11,6 +11,7 @@
     </content>
     <orderEntry type="jdk" jdkName="1.7" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Leiningen: com.google.guava:guava:15.0" level="project" />
     <orderEntry type="library" name="Leiningen: edu.stanford.nlp:stanford-corenlp:3.2.0" level="project" />
     <orderEntry type="library" name="Leiningen: info.bliki.wiki:bliki-core:3.0.19" level="project" />
     <orderEntry type="library" name="Leiningen: org.apache.commons:commons-compress:1.5" level="project" />
