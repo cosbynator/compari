@@ -15,5 +15,5 @@
 
 (deftest test-vowpalify
   (testing "Could not vowpalify")
-  (is (= "| 0:1 1:2 2:1" (vowpalify-seq {"a" 0, "b" 1, "c" 2} ["a" "b" "c" "b"])))
+  (is (= "| 0:1 1:2 2:1" (vowpalify-seq {"a" 0, "b" 1, "c" 2} ["a" "b" "q" "c" "q" "b"])))
   )

@@ -50,6 +50,7 @@
   )
  )
 
+(defn wiki-dump-articles [filename] (filter #(string/blank? (article-redirect %)) (page-seq (file-reader filename))))
 (defn wiki-dump-pages [filename] (page-seq (file-reader filename)))
 
 

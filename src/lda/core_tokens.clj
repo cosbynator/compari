@@ -4,14 +4,6 @@
 (require '[clojure.java.io :as io])
 (require '[clojure.string :as string])
 
-(def stop-words #{
-                  "!" "," "the" "of" "and" "in" "a" "to" "-RRB-" "-LRB-" ":" "\\*" "is" "''"
-                  "as" "s" "for" "by" "was" "on" "that" "with" "title" "cite" "from" "are"
-                  "?" "." ";" "-" "it" "an" "or" "url" "at" "&" "his" "her" "be" "year"
-                  "this" "date" "accessdate" "he" "she" "they" "were" "not" "also" "web" "%" "\\" "have"
-                  "has" "one" "/" "+" "all" "some" "who" "what" "where" "when" "out" "d." "s." "so" "..."
-                  "n" "i" "its" "asl" "two" "three" "new"
-                  })
 
 (defn clean-text [^String text]
   (let [
@@ -57,7 +49,7 @@
 )
 
 (defn write-word-counts [input-path output-path]
-  (save-counts output-path (sort-by #(- (get % 1)) (seq-counts (mapcat identity (pmap page-words (wiki-dump-pages input-path)))))))
+  (save-counts output-path (sort-by #(- (get % 1)) (seq-counts (apply concat (pmap page-words (wiki-dump-pages input-path)))))))
 
 ;(defn write-wiki-words [wiki-file out-file]
 ;  (with-open [^java.io.Writer w (io/writer out-file)]
