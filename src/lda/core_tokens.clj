@@ -59,14 +59,3 @@
 (defn write-word-counts [input-path output-path]
   (save-counts output-path (sort-by #(- (get % 1)) (seq-counts (apply concat (pmap page-words (wiki-dump-pages input-path)))))))
 
-;(defn write-wiki-words [wiki-file out-file]
-;  (with-open [^java.io.Writer w (io/writer out-file)]
-;    (dorun
-;      (for [pw (page-words (bzip2-reader wiki-file))]
-;        (do
-;          (.write w (clojure.string/join "\n" pw))
-;          (.write w "\n")
-;          ))
-;      )
-;    )
-;  )
