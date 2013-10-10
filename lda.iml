@@ -9,23 +9,36 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/target/protosrc" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/protosrc/com/thomasdimson/wikipedia" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target/stale" />
     </content>
     <orderEntry type="jdk" jdkName="1.7" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Leiningen: cc.mallet:mallet:2.0.7" level="project" />
     <orderEntry type="library" name="Leiningen: com.google.guava:guava:15.0" level="project" />
-    <orderEntry type="library" name="Leiningen: com.google.protobuf:protobuf-java:2.5.0" level="project" />
+    <orderEntry type="library" name="Leiningen: com.google.protobuf:protobuf-java:2.4.1" level="project" />
     <orderEntry type="library" name="Leiningen: edu.stanford.nlp:stanford-corenlp:3.2.0" level="project" />
     <orderEntry type="library" name="Leiningen: info.bliki.wiki:bliki-core:3.0.19" level="project" />
     <orderEntry type="library" name="Leiningen: org.apache.commons:commons-compress:1.5" level="project" />
     <orderEntry type="library" name="Leiningen: org.apache.commons:commons-lang3:3.1" level="project" />
     <orderEntry type="library" name="Leiningen: org.apache.logging.log4j:log4j-api:2.0-beta9" level="project" />
     <orderEntry type="library" name="Leiningen: org.apache.logging.log4j:log4j-core:2.0-beta9" level="project" />
+    <orderEntry type="library" name="Leiningen: org.apache.lucene:lucene-xercesImpl:3.5.0" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojars.achim:multiset:0.1.0-20121001.123738-7" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure:clojure:1.5.1" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure:data.xml:0.0.7" level="project" />
     <orderEntry type="library" name="Leiningen: org.jsoup:jsoup:1.7.2" level="project" />
+    <orderEntry type="library" name="Leiningen: com.googlecode.matrix-toolkits-java:mtj:0.9.14" level="project" />
+    <orderEntry type="library" name="Leiningen: jgrapht:jgrapht:0.6.0" level="project" />
+    <orderEntry type="library" name="Leiningen: junit:junit:4.10" level="project" />
+    <orderEntry type="library" name="Leiningen: net.sf.jwordnet:jwnl:1.4_rc3" level="project" />
+    <orderEntry type="library" name="Leiningen: net.sf.trove4j:trove4j:2.0.2" level="project" />
+    <orderEntry type="library" name="Leiningen: org.beanshell:bsh:2.0b4" level="project" />
+    <orderEntry type="library" name="Leiningen: org.jdom:jdom:1.1" level="project" />
+    <orderEntry type="library" name="Leiningen: com.googlecode.netlib-java:netlib-java:0.9.3" level="project" />
+    <orderEntry type="library" name="Leiningen: net.sourceforge.f2j:arpack_combined_all:0.1" level="project" />
+    <orderEntry type="library" name="Leiningen: org.hamcrest:hamcrest-core:1.1" level="project" />
+    <orderEntry type="library" name="Leiningen: commons-logging:commons-logging:1.1.1" level="project" />
     <orderEntry type="library" name="Leiningen: com.googlecode.efficient-java-matrix-library:ejml:0.19" level="project" />
     <orderEntry type="library" name="Leiningen: de.jollyday:jollyday:0.4.7" level="project" />
     <orderEntry type="library" name="Leiningen: joda-time:joda-time:2.1" level="project" />
@@ -36,7 +49,6 @@
     <orderEntry type="library" name="Leiningen: xml-apis:xml-apis:1.3.03" level="project" />
     <orderEntry type="library" name="Leiningen: commons-httpclient:commons-httpclient:3.1" level="project" />
     <orderEntry type="library" name="Leiningen: commons-codec:commons-codec:1.2" level="project" />
-    <orderEntry type="library" name="Leiningen: commons-logging:commons-logging:1.0.4" level="project" />
     <orderEntry type="library" name="Leiningen: org.tukaani:xz:1.2" level="project" />
     <orderEntry type="library" name="Leiningen: org.clojure:algo.generic:0.1.0" level="project" />
   </component>

@@ -13,8 +13,10 @@
   :plugins [[lein-protobuf "0.3.1"]]
   :java-source-paths ["src/java"]
   :dependencies [
+                  [cc.mallet/mallet "2.0.7"]
                   [com.google.protobuf/protobuf-java "2.4.1"]
                   [com.google.guava/guava "15.0"]
+                  [org.apache.lucene/lucene-xercesImpl "3.5.0"]
                   [org.clojure/clojure "1.5.1"]
                   [org.clojure/data.xml "0.0.7"]
                   [org.clojars.achim/multiset "0.1.0-SNAPSHOT"]
