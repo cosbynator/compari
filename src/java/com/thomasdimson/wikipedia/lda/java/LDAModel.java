@@ -29,8 +29,7 @@ public class LDAModel {
 
     public static Instance malletInstanceFromDumpPage(Data.DumpPage page) {
         String target = Double.toString(page.getId());
-        System.out.println(page.getTitle());
-        return new Instance(page.getText(), target, target, page.getTitle());
+        return new Instance(page.getText(), target, page.getTitle(), page.getTitle());
     }
 
     public static ParallelTopicModel createFromStructuredDump(String filename, int numTopics, String stateFilePrefix) throws IOException {
