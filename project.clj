@@ -18,7 +18,7 @@
                   [com.google.guava/guava "15.0"]
                   [org.apache.lucene/lucene-xercesImpl "3.5.0"]
                   [org.clojure/clojure "1.5.1"]
-                  ;[org.clojure/data.xml "0.0.7"]
+                  [org.clojure/data.xml "0.0.7"]
                   [org.clojars.achim/multiset "0.1.0-SNAPSHOT"]
                   [org.apache.commons/commons-compress "1.5"]
                   [org.apache.commons/commons-lang3 "3.1"]

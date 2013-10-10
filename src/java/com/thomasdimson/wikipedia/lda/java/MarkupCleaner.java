@@ -19,7 +19,7 @@ public class MarkupCleaner {
             "this", "date", "accessdate", "he", "she", "they", "were", "not", "also", "web", "%", "\\", "have",
             "has", "one", "/", "+", "all", "some", "who", "what", "where", "when", "out", "d.", "s.", "so", "...",
             "n", "i", "its", "asl", "two", "three", "new", "use", "div", "col", "ref", "thus", "over", "left",
-            "right", "but", "much", "name", "can", "doi",
+            "right", "but", "much", "name", "can", "doi", "had", "last", "most", "del", "itself",
             "last1", "last2", "last3", "last4", "last5", "last6", "last7", "last8", "last9",
             "first1", "first2", "first3", "first4", "first5", "first6", "first7", "first8", "first9",
             "author1", "author2", "author3", "author4", "author5", "author6", "author7", "author8", "author9",
