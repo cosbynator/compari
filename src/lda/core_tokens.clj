@@ -4,6 +4,14 @@
 (require '[clojure.java.io :as io])
 (require '[clojure.string :as string])
 
+(def stop-words #{
+                  "!" "," "the" "of" "and" "in" "a" "to" "-RRB-" "-LRB-" ":" "\\*" "is" "''"
+                  "as" "s" "for" "by" "was" "on" "that" "with" "title" "cite" "from" "are"
+                  "?" "." ";" "-" "it" "an" "or" "url" "at" "&" "his" "her" "be" "year"
+                  "this" "date" "accessdate" "he" "she" "they" "were" "not" "also" "web" "%" "\\" "have"
+                  "has" "one" "/" "+" "all" "some" "who" "what" "where" "when" "out" "d." "s." "so" "..."
+                  "n" "i" "its" "asl" "two" "three" "new"
+                  })
 
 (defn clean-text [^String text]
   (let [

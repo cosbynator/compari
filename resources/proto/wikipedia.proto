@@ -1,0 +1,11 @@
+option java_package = "com.thomasdimson.wikipedia";
+option java_outer_classname = "Data";
+
+message DumpPage {
+    required uint32 namespace = 1;
+    required uint64 id = 2;
+    required string title = 3;
+    required string text = 4;
+
+    optional string redirect = 5;
+}
