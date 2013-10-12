@@ -68,25 +68,9 @@
   )
 )
 
-(defn read-lda-map [^String lda-file]
-  (let [line2assoc
-          (fn [^String line]
-            (let  [split (string/split line #"\t")
-                   sequential-id (get split 0)
-                   title (get split 1)
-                   topics (map #(Integer/parseInt %) (take-nth 2 (drop 2 split)))
-                   probs (map #(Double/parseDouble %) (take-nth 2 (drop 3 split)))
-                   ]
-            [title (into-array Double/TYPE (map #(get % 1) (sort (cons [100000 1.0] (map vector topics probs)))))]
-              )
-            )]
-      (with-open [r (io/reader lda-file)] (into {} (map line2assoc (rest (line-seq r)))))
-  )
-)
-
 (defn tspr [^String input-file ^String lda-file ^String output-file]
   (let [
-         lda-map (dbg-b "Reading lda map" (read-lda-map lda-file))
+         lda-map (dbg-b "Reading lda map" (TopicSensitivePageRank/readLDAMap lda-file))
          intermediate-vector (dbg-b "Reading intermediate nodes" (java.util.ArrayList. (make-intermediate-tspr-nodes input-file lda-map)))
        ]
     (do

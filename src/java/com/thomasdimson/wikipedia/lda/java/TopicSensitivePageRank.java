@@ -1,10 +1,14 @@
 package com.thomasdimson.wikipedia.lda.java;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.thomasdimson.wikipedia.Data;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +74,40 @@ public class TopicSensitivePageRank {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static Map<String, double[]> readLDAMap(String filename) throws IOException {
+        BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(filename), Charset.forName("UTF-8")));
+        String line;
+        Splitter splitter = Splitter.on("\t").omitEmptyStrings().trimResults();
+        Map<String, double[]> ret = Maps.newHashMapWithExpectedSize(1000000);
+        int lastTopicLength = -1;
+        while((line = r.readLine()) != null) {
+            if(line.startsWith("#"))  {
+                continue;
+            }
+
+            List<String> split = splitter.splitToList(line);
+            String title = split.get(1);
+            double[] topics = new double[(split.size() - 2) / 2 + 1];
+            topics[topics.length - 1] = 1.0;
+            if(lastTopicLength == -1) {
+                lastTopicLength = topics.length;
+            } else if(lastTopicLength != topics.length) {
+                throw new RuntimeException("Bad topics length for " + line);
+            }
+
+            int nextTopicId = -1;
+            for(int i = 2; i < split.size(); i++) {
+                if(i % 2 == 0) {
+                    nextTopicId = Integer.parseInt(split.get(i));
+                } else {
+                    topics[nextTopicId] = Double.parseDouble(split.get(i));
+                }
+            }
+            ret.put(title, topics);
+        }
+        return ret;
     }
 
     public static void rankInPlace(List<IntermediateTSPRNode> nodes) {
