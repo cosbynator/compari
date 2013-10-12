@@ -91,7 +91,7 @@
        ]
     (do
       (TopicSensitivePageRank/rankInPlace intermediate-vector)
-      (with-open [w (io/writer output-file)]
+      (with-open [w (io/output-stream output-file)]
         (doseq [^IntermediateTSPRNode node intermediate-vector]
           (.writeDelimitedTo (.toProto node) w)
       ))
