@@ -15,6 +15,7 @@
   :dependencies [
                   [cc.mallet/mallet "2.0.7"]
                   [com.google.protobuf/protobuf-java "2.4.1"]
+                  [org.flatland/protobuf "0.7.1"]
                   [com.google.guava/guava "15.0"]
                   [org.apache.lucene/lucene-xercesImpl "3.5.0"]
                   [org.clojure/clojure "1.5.1"]

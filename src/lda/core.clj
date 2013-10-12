@@ -1,20 +1,60 @@
 (ns lda.core)
 (set! *warn-on-reflection* true)
 
-(load "core_xml")
-(load "core_vowpal")
-(load "core_tokens")
+(use 'flatland.protobuf.core)
+(require '[clojure.string :as string])
+(require '[clojure.java.io :as io])
 
 (import 'com.thomasdimson.wikipedia.lda.java.MarkupCleaner)
 (import 'com.thomasdimson.wikipedia.lda.java.WikipediaHandler)
 (import 'com.thomasdimson.wikipedia.Data$DumpPage)
+(import 'com.thomasdimson.wikipedia.Data$WikiGraphNode)
 
 
-(defn clean-wiki-stream [input-file whitelist-file output-file]
+; Make graph out of wikipedia
+(def WikiGraphNode (protodef Data$WikiGraphNode))
 
+(defn valid-article? [^Data$DumpPage page] (not (.hasRedirect page)))
+(defn textual-links [^String wiki-text] (map #(% 1) (re-seq #"\[\[(?:[^|\]]*\|)?([^\]]+)\]\]" wiki-text)))
+
+(defn extract-redirects [pages]
+  (into {} (for [^Data$DumpPage page pages :when (.hasRedirect page)]
+             [(.getTitle page) (.getRedirect page)]))
+)
+(defn extract-title-id-mapping [pages]
+    (into {} (for [^Data$DumpPage page pages :when (valid-article? page)]
+               [(.getTitle page) (.getId page)]))
+    )
+
+(defn link-text-to-id [^String link-text redirect-map title-map]
+  (title-map (if-let [redirected (redirect-map link-text)] redirected link-text))
+)
+
+(defn dump-file-iterator [^String input-file] (iterator-seq (WikipediaHandler/newStructuredDumpIterator input-file)))
+
+(defn wiki-graph-nodes [^String input-file]
+  (let [redirects (extract-redirects (dump-file-iterator input-file))
+        title-map (extract-title-id-mapping (dump-file-iterator input-file))]
+    (for [^Data$DumpPage page (dump-file-iterator input-file)
+             :when (valid-article? page)
+             :let [link-ids (into [] (filter identity (map #(link-text-to-id % redirects title-map) (textual-links (.getText page)))))]
+           ]
+      (protobuf WikiGraphNode :id (.getId page) :title (.getTitle page) :edges link-ids)
+    )
+  )
+)
+
+(defn write-wiki-graph-nodes [^String input-file ^String output-file]
+  (with-open [w (io/output-stream output-file)]
+    (apply (partial protobuf-write w) (wiki-graph-nodes input-file))
+    )
+  )
+
+
+; Prepare for LDA
+(defn clean-wiki-stream [^String input-file ^String whitelist-file ^String output-file]
   (let [^MarkupCleaner markup-cleaner (MarkupCleaner. MarkupCleaner/STOP_WORDS (MarkupCleaner/readWhitelist whitelist-file 1))
         dump-page-clean (fn [^Data$DumpPage page] [page (.cleanMarkup markup-cleaner (.getText page))])
-        valid-article? (fn valid-article? [^Data$DumpPage page] (not (.hasRedirect page)))
         ]
     (with-open [^java.io.BufferedOutputStream os (java.io.BufferedOutputStream. (java.io.FileOutputStream. output-file))]
       (doseq [clean_page (pmap dump-page-clean (filter valid-article? (iterator-seq (WikipediaHandler/newStructuredDumpIterator input-file))))

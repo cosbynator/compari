@@ -8,6 +8,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.thomasdimson.wikipedia.Data;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -59,5 +60,13 @@ public class LDAModel {
         return model;
     }
 
-
+    public static void writeFromState(String filename, int numTopics, String documentTopicFile, String wordFile) throws IOException {
+        ParallelTopicModel model = new ParallelTopicModel(numTopics, 0.01 * numTopics, ParallelTopicModel.DEFAULT_BETA);
+        System.err.println("Initializing from state");
+        model.initializeFromState(new File(filename));
+        System.err.println("Writing document topics");
+        model.printDocumentTopics(new File(documentTopicFile));
+        System.err.println("Writing topic words");
+        model.printTopicWordWeights(new File(wordFile));
+    }
 }

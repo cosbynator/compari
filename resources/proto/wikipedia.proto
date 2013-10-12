@@ -9,3 +9,9 @@ message DumpPage {
 
     optional string redirect = 5;
 }
+
+message WikiGraphNode {
+    required uint64 id = 1;
+    required string title = 2;
+    repeated uint64 edges = 3 [packed=true];
+}

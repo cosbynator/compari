@@ -2,18 +2,12 @@
   (:require [clojure.test :refer :all]
             [lda.core :refer :all]))
 
-(def some-sequence ["a"  "b" "c"])
 
-(deftest test-index-map
-  (testing "FIXME, I fail."
-    (is (= {"a" 0, "b" 1, "c" 2} (index-map some-sequence)))))
+(def some-wiki "<div style=\"font-size:162%; border:none; margin:0; padding:.1em; color:#000;\">Welcome to [[Wikipedia]],</div>
+  <div style=\"top:+0.2em; font-size:95%;\">the [[free content|free]] [[encyclopedia]] that [[Wikipedia:Introduction|anyone can edit]].</div>")
 
-(deftest test-seq-counts
-  (testing "Could not get id counts from text")
-    (is (= {0 3, 1 1} (seq-counts (map {"a" 0, "b" 1} ["a" "a" "b" "a"]))))
+(deftest test-textual-links
+  (testing "Compute textual links from wiki markup")
+  (is (= ["Wikipedia" "free" "encyclopedia" "anyone can edit"] (into [] (textual-links some-wiki))))
   )
 
-(deftest test-vowpalify
-  (testing "Could not vowpalify")
-  (is (= "| 0:1 1:2 2:1" (vowpalify-seq {"a" 0, "b" 1, "c" 2} ["a" "b" "q" "c" "q" "b"])))
-  )
