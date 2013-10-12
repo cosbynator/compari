@@ -93,8 +93,8 @@ public class TopicSensitivePageRank {
         }
 
 
-        double [][] lastRank = new double[numTopics][numTopics];
-        double [][] thisRank = new double[numTopics][numTopics];
+        double [][] lastRank = new double[numNodes][numTopics];
+        double [][] thisRank = new double[numNodes][numTopics];
 
         for(int iteration = 0; iteration < NUM_ITERATIONS; iteration++) {
             double [][]tmp = thisRank;

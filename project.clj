@@ -3,16 +3,10 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :repositories [
-                  ["info-bliki-repository" {
-                    :url "http://gwtwiki.googlecode.com/svn/maven-repository/"
-                    :snapshots true
-                    :releases true
-                  }]
-                ]
   :plugins [[lein-protobuf "0.3.1"]]
   :java-source-paths ["src/java"]
   :dependencies [
+                  [intervox/clj-progress "0.1.1"]
                   [cc.mallet/mallet "2.0.7"]
                   [com.google.protobuf/protobuf-java "2.4.1"]
                   [org.flatland/protobuf "0.7.1"]
