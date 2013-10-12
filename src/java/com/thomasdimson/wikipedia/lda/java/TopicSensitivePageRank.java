@@ -82,6 +82,8 @@ public class TopicSensitivePageRank {
         Splitter splitter = Splitter.on("\t").omitEmptyStrings().trimResults();
         Map<String, double[]> ret = Maps.newHashMapWithExpectedSize(1000000);
         int lastTopicLength = -1;
+        int lineNum = 0;
+        System.out.println();
         while((line = r.readLine()) != null) {
             if(line.startsWith("#"))  {
                 continue;
@@ -106,6 +108,11 @@ public class TopicSensitivePageRank {
                 }
             }
             ret.put(title, topics);
+            lineNum++;
+            if(lineNum % 10000 == 0) {
+                System.out.print("Reached line " + lineNum + "      \r");
+                System.out.flush();
+            }
         }
         return ret;
     }
