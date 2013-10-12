@@ -33,7 +33,7 @@ public class LDAModel {
         return new Instance(page.getText(), target, page.getTitle(), page.getTitle());
     }
 
-    public static ParallelTopicModel createFromStructuredDump(String filename, int numTopics, String stateFilePrefix) throws IOException {
+    public static ParallelTopicModel initializeTopicModel(String filename, int numTopics) throws IOException {
         InstanceList instanceList = new InstanceList(INSTANCE_PIPE);
         Iterator<Data.DumpPage> it = WikipediaHandler.newStructuredDumpIterator(filename);
         System.err.println("Loading data");
@@ -41,15 +41,20 @@ public class LDAModel {
             Data.DumpPage p = it.next();
             instanceList.addThruPipe(malletInstanceFromDumpPage(p));
         }
-        System.err.println("Done! Starting estimation");
 
         ParallelTopicModel model = new ParallelTopicModel(numTopics, 0.01 * numTopics, ParallelTopicModel.DEFAULT_BETA);
         model.addInstances(instanceList);
         model.setNumIterations(1000);
         model.setNumThreads(Runtime.getRuntime().availableProcessors());
-        if(stateFilePrefix != null) {
-            model.setSaveState(10, stateFilePrefix);
+        return model;
+    }
+
+    public static ParallelTopicModel createFromStructuredDump(String filename, int numTopics, String modelFilePrefix) throws IOException {
+        ParallelTopicModel model = initializeTopicModel(filename, numTopics);
+        if(modelFilePrefix != null) {
+            model.setSaveSerializedModel(250, modelFilePrefix);
         }
+        System.err.println("Done! Starting estimation");
         model.estimate();
 
         System.err.println("Topics:\n");
@@ -60,10 +65,10 @@ public class LDAModel {
         return model;
     }
 
-    public static void writeFromState(String filename, int numTopics, String documentTopicFile, String wordFile) throws IOException {
-        ParallelTopicModel model = new ParallelTopicModel(numTopics, 0.01 * numTopics, ParallelTopicModel.DEFAULT_BETA);
+    public static void writeFromState(String dataFile, int numTopics, String stateFile, String documentTopicFile, String wordFile) throws IOException {
+        ParallelTopicModel model = initializeTopicModel(dataFile, numTopics);
         System.err.println("Initializing from state");
-        model.initializeFromState(new File(filename));
+        model.initializeFromState(new File(stateFile));
         System.err.println("Writing document topics");
         model.printDocumentTopics(new File(documentTopicFile));
         System.err.println("Writing topic words");
