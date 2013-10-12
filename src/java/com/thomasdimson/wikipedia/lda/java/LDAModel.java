@@ -65,10 +65,9 @@ public class LDAModel {
         return model;
     }
 
-    public static void writeFromModel(String dataFile, int numTopics, String stateFile, String documentTopicFile, String wordFile) throws Exception {
-        ParallelTopicModel model = ParallelTopicModel.read(new File(dataFile));
-        System.err.println("Initializing from state");
-        model.initializeFromState(new File(stateFile));
+    public static void writeFromModel(String modelFile, int numTopics, String documentTopicFile, String wordFile) throws Exception {
+        System.err.println("Reading topic model");
+        ParallelTopicModel model = ParallelTopicModel.read(new File(modelFile));
         System.err.println("Writing document topics");
         model.printDocumentTopics(new File(documentTopicFile));
         System.err.println("Writing topic words");
