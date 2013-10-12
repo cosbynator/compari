@@ -15,3 +15,10 @@ message WikiGraphNode {
     required string title = 2;
     repeated uint64 edges = 3 [packed=true];
 }
+
+message TSPRGraphNode {
+    required uint64 id = 1;
+    required string title = 2;
+    repeated double lda = 3;
+    repeated double tspr = 4;
+}

@@ -7,12 +7,15 @@
 
 (import 'com.thomasdimson.wikipedia.lda.java.MarkupCleaner)
 (import 'com.thomasdimson.wikipedia.lda.java.WikipediaHandler)
+(import 'com.thomasdimson.wikipedia.lda.java.IntermediateTSPRNode)
+(import 'com.thomasdimson.wikipedia.lda.java.TopicSensitivePageRank)
 (import 'com.thomasdimson.wikipedia.Data$DumpPage)
 (import 'com.thomasdimson.wikipedia.Data$WikiGraphNode)
 
 
 ; Make graph out of wikipedia
 (def WikiGraphNode (protodef Data$WikiGraphNode))
+(def )
 
 (defn valid-article? [^Data$DumpPage page] (not (.hasRedirect page)))
 (defn textual-links [^String wiki-text] (map #(% 1) (re-seq #"\[\[(?:[^|\]]*\|)?([^\]]+)\]\]" wiki-text)))
@@ -47,9 +50,35 @@
 (defn write-wiki-graph-nodes [^String input-file ^String output-file]
   (with-open [w (io/output-stream output-file)]
     (apply (partial protobuf-write w) (wiki-graph-nodes input-file))
+  )
+)
+
+(defn read-wiki-graph-nodes [^String input-file] (protobuf-seq WikiGraphNode input-file))
+
+(defn make-intermediate-tspr-nodes [^String input-file ^String lda-file]
+  (let [lda (into-array Double/TYPE (map double (range 100)))]
+    (map-indexed
+      (fn [idx ^WikiGraphNode graph-node]
+        (IntermediateTSPRNode. idx
+          (int (:id graph-node) (:title graph-node) (into-array Long/TYPE (map long (:edges graph-node))) lda)
+        )
+      )
+      (read-wiki-graph-nodes input-file)
+     )
+  )
+)
+
+(defn tspr [^String input-file ^String lda-file ^String output-file]
+  (let [intermediate-vector (java.util.ArrayList. (make-intermediate-tspr-nodes input-file lda-file))]
+    (do
+      (TopicSensitivePageRank/rankInPlace intermediate-vector)
+      (with-open [w (io/writer output-file)]
+        (doseq [^IntermediateTSPRNode node intermediate-vector]
+          (.writeDelimitedTo (.toProto node) w)
+      ))
     )
   )
-
+)
 
 ; Prepare for LDA
 (defn clean-wiki-stream [^String input-file ^String whitelist-file ^String output-file]
@@ -65,4 +94,3 @@
         )
       )
   ))
-

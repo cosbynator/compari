@@ -23,7 +23,9 @@ public class MarkupCleaner {
             "last1", "last2", "last3", "last4", "last5", "last6", "last7", "last8", "last9",
             "first1", "first2", "first3", "first4", "first5", "first6", "first7", "first8", "first9",
             "author1", "author2", "author3", "author4", "author5", "author6", "author7", "author8", "author9",
-            "dmy", "dates",  "those", "any", "however", "may", "category", "archiveurl", "aur", "pmc"
+            "dmy", "dates",  "those", "any", "however", "may", "category", "archiveurl", "aur", "pmc",
+            "text-align", "la2", "sup", "would", "there", "rowspan", "dfffdf", "dts", "none", "background",
+            "colspan", "rowspan", "top", "border", "till", "undo", "nts", "about", "sub"
     });
 
     public static Set<String> readWhitelist(String filename, int index) throws IOException {
