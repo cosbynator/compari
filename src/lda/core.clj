@@ -15,7 +15,6 @@
 
 ; Make graph out of wikipedia
 (def WikiGraphNode (protodef Data$WikiGraphNode))
-(def )
 
 (defn valid-article? [^Data$DumpPage page] (not (.hasRedirect page)))
 (defn textual-links [^String wiki-text] (map #(% 1) (re-seq #"\[\[(?:[^|\]]*\|)?([^\]]+)\]\]" wiki-text)))
@@ -58,9 +57,9 @@
 (defn make-intermediate-tspr-nodes [^String input-file ^String lda-file]
   (let [lda (into-array Double/TYPE (map double (range 100)))]
     (map-indexed
-      (fn [idx ^WikiGraphNode graph-node]
+      (fn [idx graph-node]
         (IntermediateTSPRNode. idx
-          (int (:id graph-node) (:title graph-node) (into-array Long/TYPE (map long (:edges graph-node))) lda)
+          (int (:id graph-node)) (:title graph-node) (into-array Long/TYPE (map long (:edges graph-node))) lda
         )
       )
       (read-wiki-graph-nodes input-file)
