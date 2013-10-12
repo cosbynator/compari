@@ -2,7 +2,6 @@
 (set! *warn-on-reflection* true)
 
 (use 'flatland.protobuf.core)
-(use 'clj-progress.core)
 (require '[clojure.string :as string])
 (require '[clojure.java.io :as io])
 
@@ -12,8 +11,6 @@
 (import 'com.thomasdimson.wikipedia.lda.java.TopicSensitivePageRank)
 (import 'com.thomasdimson.wikipedia.Data$DumpPage)
 (import 'com.thomasdimson.wikipedia.Data$WikiGraphNode)
-
-(def num-docs 7508922)
 
 ; Macro zone
 (defmacro dbg-b [str & body] `(do (println ~str) ~@body))
@@ -61,17 +58,13 @@
 (defn read-wiki-graph-nodes [^String input-file] (protobuf-seq WikiGraphNode input-file))
 
 (defn make-intermediate-tspr-nodes [^String input-file lda-map]
-  (do
-    (init "Creating intermediate TSPR nodes" num-docs)
-    (done
-      (map-indexed
-        (fn [idx graph-node]
-          (tick (IntermediateTSPRNode. idx
-            (int (:id graph-node)) (:title graph-node) (into-array Long/TYPE (map long (:edges graph-node))) (get lda-map (:title graph-node))
-          ))
+    (map-indexed
+      (fn [idx graph-node]
+        (IntermediateTSPRNode. idx
+          (int (:id graph-node)) (:title graph-node) (into-array Long/TYPE (map long (:edges graph-node))) (get lda-map (:title graph-node))
         )
-        (read-wiki-graph-nodes input-file)
-    ))
+      )
+      (read-wiki-graph-nodes input-file)
   )
 )
 
@@ -87,12 +80,7 @@
             [title (into-array Double/TYPE (map #(get % 1) (sort (cons [100000 1.0] (map vector topics probs)))))]
               )
             )]
-      (with-open [r (io/reader lda-file)]
-        (do
-          (init "Reading LDA Map" num-docs)
-          (done (into {} (map (comp tick line2assoc) (rest (line-seq r)))))
-        )
-       )
+      (with-open [r (io/reader lda-file)] (into {} (map line2assoc (rest (line-seq r)))))
   )
 )
 
