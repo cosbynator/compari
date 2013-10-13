@@ -35,11 +35,11 @@ public class TopicSensitivePageRank {
         };
     }
 
-    public static List<Data.TSPRGraphNode> topKLDA(Iterable<Data.TSPRGraphNode> nodes, int index, int k) {
+    public static List<Data.TSPRGraphNode> topKLDA(Iterator<Data.TSPRGraphNode> nodes, int index, int k) {
         return byLDA(index).greatestOf(nodes, k);
     }
 
-    public static List<Data.TSPRGraphNode> topKTSPR(Iterable<Data.TSPRGraphNode> nodes, int index, int k) {
+    public static List<Data.TSPRGraphNode> topKTSPR(Iterator<Data.TSPRGraphNode> nodes, int index, int k) {
         return byTSPR(index).greatestOf(nodes, k);
     }
 
