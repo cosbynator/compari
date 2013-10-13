@@ -30,7 +30,7 @@ public class TopicSensitivePageRank {
         return new Ordering<Data.TSPRGraphNode>() {
             @Override
             public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
-                return Double.compare(tsprGraphNode.getLda(index), tsprGraphNode2.getLda(index));
+                return Double.compare(tsprGraphNode.getTspr(index), tsprGraphNode2.getTspr(index));
             }
         };
     }
@@ -136,6 +136,9 @@ public class TopicSensitivePageRank {
 
             nodeById.put(node.id, node);
         }
+
+        System.out.println("Nodes " + numNodes);
+        System.out.println("LDA sum " + ldaSums[0]);
 
 
         double [][] lastRank = new double[numNodes][numTopics];
