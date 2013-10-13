@@ -117,7 +117,7 @@ public class TopicSensitivePageRank {
         return ret;
     }
 
-    public static void rankInPlace(List<IntermediateTSPRNode> nodes) {
+    public static void rankInPlace(List<IntermediateTSPRNode> nodes, int numIterations) {
         if(nodes.size() == 0) {
             return;
         }
@@ -144,7 +144,7 @@ public class TopicSensitivePageRank {
         double [][] lastRank = new double[numNodes][numTopics];
         double [][] thisRank = new double[numNodes][numTopics];
 
-        for(int iteration = 0; iteration < NUM_ITERATIONS; iteration++) {
+        for(int iteration = 0; iteration < numIterations; iteration++) {
             double [][]tmp = thisRank;
             thisRank = lastRank;
             lastRank = tmp;

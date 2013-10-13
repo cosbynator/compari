@@ -38,14 +38,15 @@
 (defn dump-file-iterator [^String input-file] (iterator-seq (WikipediaHandler/newStructuredDumpIterator input-file)))
 
 (defn wiki-graph-nodes [^String input-file]
-  (let [redirects (extract-redirects (dump-file-iterator input-file))
-        title-map (extract-title-id-mapping (dump-file-iterator input-file))]
-    (for [^Data$DumpPage page (dump-file-iterator input-file)
+  (let [redirects (dbg-b "Extracting redirects" (extract-redirects (dump-file-iterator input-file)))
+        title-map (dbg-b "Extracting id mapping" (extract-title-id-mapping (dump-file-iterator input-file)))]
+    (dbg-b "Creating graph nodes"
+      (for [^Data$DumpPage page (dump-file-iterator input-file)
              :when (valid-article? page)
              :let [link-ids (into [] (filter identity (map #(link-text-to-id % redirects title-map) (textual-links (.getText page)))))]
            ]
       (protobuf WikiGraphNode :id (.getId page) :title (.getTitle page) :edges link-ids)
-    )
+    ))
   )
 )
 
@@ -68,13 +69,13 @@
   )
 )
 
-(defn tspr [^String input-file ^String lda-file ^String output-file]
+(defn tspr [^String input-file ^String lda-file ^String output-file ^Integer num-iterations]
   (let [
          lda-map (dbg-b "Reading lda map" (TopicSensitivePageRank/readLDAMap lda-file))
          intermediate-vector (dbg-b "Reading intermediate nodes" (java.util.ArrayList. (make-intermediate-tspr-nodes input-file lda-map)))
        ]
     (do
-      (TopicSensitivePageRank/rankInPlace intermediate-vector)
+      (TopicSensitivePageRank/rankInPlace intermediate-vector num-iterations)
       (with-open [w (io/output-stream output-file)]
         (doseq [^IntermediateTSPRNode node intermediate-vector]
           (.writeDelimitedTo (.toProto node) w)

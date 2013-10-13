@@ -18,10 +18,19 @@ import java.io.*;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 
 public class WikipediaHandler extends DefaultHandler {
     public static final Logger logger  = LogManager.getLogger(WikipediaHandler.class);
+
+    public static final Pattern SPECIAL_PATTERN = Pattern.compile(
+        "^(File|Talk|Special|Wikipedia|Wiktionary|User|User Talk|Category|Portal|Template|MediaWiki|Help):"
+    );
+
+    public static boolean isSpecialTitle(String title) {
+        return SPECIAL_PATTERN.matcher(title).matches();
+    }
 
     public static void writeStructuredDump(String xmlFileName, String outputFileName) throws IOException, SAXException,
                                                                                              ParserConfigurationException, CompressorException {
@@ -43,6 +52,10 @@ public class WikipediaHandler extends DefaultHandler {
             WikipediaHandler handler = new WikipediaHandler(new Function<DumpPage, Void>() {
                 @Override
                 public Void apply(DumpPage dumpPage) {
+                    if(isSpecialTitle(dumpPage.getTitle())) {
+                        return null;
+                    }
+
                     try {
                         dumpPage.writeDelimitedTo(outputStream);
                     } catch (IOException e) {
