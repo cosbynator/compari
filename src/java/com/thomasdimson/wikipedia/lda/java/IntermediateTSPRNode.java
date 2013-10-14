@@ -10,20 +10,25 @@ public class IntermediateTSPRNode {
 
     public final double[] lda;
     public final double[] tspr;
+    public final String infoboxType;
 
-    public IntermediateTSPRNode(int linearId, long id, String title, long []edges, double[] lda) {
+    public IntermediateTSPRNode(int linearId, long id, String title, long []edges, double[] lda, String infoboxType) {
         this.linearId = linearId;
         this.id = id;
         this.title = title;
         this.edges = edges;
         this.lda = lda;
         this.tspr = new double[this.lda.length];
+        this.infoboxType = infoboxType;
     }
 
     public Data.TSPRGraphNode toProto() {
         Data.TSPRGraphNode.Builder builder = Data.TSPRGraphNode.newBuilder()
                 .setId(this.id)
                 .setTitle(this.title);
+        if(infoboxType != null) {
+            builder.setInfoboxType(infoboxType);
+        }
         for(int i = 0; i < this.lda.length; i++) {
             builder.addLda(lda[i]);
             builder.addTspr(tspr[i]);

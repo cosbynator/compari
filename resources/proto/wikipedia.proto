@@ -14,6 +14,7 @@ message WikiGraphNode {
     required uint64 id = 1;
     required string title = 2;
     repeated uint64 edges = 3 [packed=true];
+    optional string infobox_type = 4;
 }
 
 message TSPRGraphNode {
@@ -21,4 +22,5 @@ message TSPRGraphNode {
     required string title = 2;
     repeated double lda = 3;
     repeated double tspr = 4;
+    optional string infobox_type = 5;
 }

@@ -21,6 +21,7 @@
 
 (defn valid-article? [^Data$DumpPage page] (not (.hasRedirect page)))
 (defn textual-links [^String wiki-text] (map #(% 1) (re-seq #"\[\[(?:[^|\]]*\|)?([^\]]+)\]\]" wiki-text)))
+(defn infobox-type [^String wiki-text] (first (map #(% 1) (re-seq #"\{\{[Ii]nfobox\s+(\S+)" wiki-text))))
 
 (defn extract-redirects [pages]
   (into {} (for [^Data$DumpPage page pages :when (.hasRedirect page)]
@@ -30,6 +31,7 @@
     (into {} (for [^Data$DumpPage page pages :when (valid-article? page)]
                [(.getTitle page) (.getId page)]))
     )
+
 
 (defn link-text-to-id [^String link-text redirect-map title-map]
   (title-map (if-let [redirected (redirect-map link-text)] redirected link-text))
@@ -43,9 +45,9 @@
     (dbg-b "Creating graph nodes"
       (for [^Data$DumpPage page (dump-file-iterator input-file)
              :when (valid-article? page)
-             :let [link-ids (into [] (filter identity (map #(link-text-to-id % redirects title-map) (textual-links (.getText page)))))]
+             :let [link-ids (into [] (distinct (filter identity (map #(link-text-to-id % redirects title-map) (textual-links (.getText page))))))]
            ]
-      (protobuf WikiGraphNode :id (.getId page) :title (.getTitle page) :edges link-ids)
+      (protobuf WikiGraphNode :id (.getId page) :title (.getTitle page) :edges link-ids :infobox_type (infobox-type (.getText page)))
     ))
   )
 )
@@ -62,7 +64,8 @@
     (map-indexed
       (fn [idx graph-node]
         (IntermediateTSPRNode. idx
-          (int (:id graph-node)) (:title graph-node) (into-array Long/TYPE (map long (:edges graph-node))) (get lda-map (:title graph-node))
+          (int (:id graph-node)) (:title graph-node) (into-array Long/TYPE (map long (:edges graph-node)))
+          (get lda-map (:title graph-node)) (:infobox_type graph-node)
         )
       )
       (read-wiki-graph-nodes input-file)
