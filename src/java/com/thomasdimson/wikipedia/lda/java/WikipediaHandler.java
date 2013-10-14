@@ -25,7 +25,7 @@ public class WikipediaHandler extends DefaultHandler {
     public static final Logger logger  = LogManager.getLogger(WikipediaHandler.class);
 
     public static final Pattern SPECIAL_PATTERN = Pattern.compile(
-        "^(File|Talk|Special|Wikipedia|Wiktionary|User|User Talk|Category|Portal|Template|MediaWiki|Help):"
+        "^(File|Talk|Special|Wikipedia|Wiktionary|User|User Talk|Category|Portal|Template|MediaWiki|Help):.*$"
     );
 
     public static boolean isSpecialTitle(String title) {

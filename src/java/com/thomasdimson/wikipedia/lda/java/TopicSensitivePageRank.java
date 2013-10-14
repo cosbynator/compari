@@ -21,7 +21,15 @@ public class TopicSensitivePageRank {
         return new Ordering<Data.TSPRGraphNode>() {
             @Override
             public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
-                return Double.compare(tsprGraphNode.getLda(index), tsprGraphNode2.getLda(index));
+                boolean special1 = WikipediaHandler.isSpecialTitle(tsprGraphNode.getTitle());
+                boolean special2 = WikipediaHandler.isSpecialTitle(tsprGraphNode2.getTitle());
+                if(special1 && special2 || !special1 && !special2) {
+                    return Double.compare(tsprGraphNode.getLda(index), tsprGraphNode2.getLda(index));
+                } else if (special2) {
+                    return 1;
+                } else {
+                    return -1;
+                }
             }
         };
     }
@@ -30,7 +38,15 @@ public class TopicSensitivePageRank {
         return new Ordering<Data.TSPRGraphNode>() {
             @Override
             public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
-                return Double.compare(tsprGraphNode.getTspr(index), tsprGraphNode2.getTspr(index));
+                boolean special1 = WikipediaHandler.isSpecialTitle(tsprGraphNode.getTitle());
+                boolean special2 = WikipediaHandler.isSpecialTitle(tsprGraphNode2.getTitle());
+                if(special1 && special2 || !special1 && !special2) {
+                    return Double.compare(tsprGraphNode.getTspr(index), tsprGraphNode2.getTspr(index));
+                } else if (special2) {
+                    return 1;
+                } else {
+                    return -1;
+                }
             }
         };
     }
