@@ -8,7 +8,7 @@
 
 (def stanford-wiki "{{Use mdy dates|date=October 2013}}
 {{Redirect|Stanford}}
-{{Infobox university
+{{Infobox   university    fun <!--goodness-->
 |image_name= Stanford University seal 2003.svg")
 
 (deftest test-textual-links
@@ -19,6 +19,6 @@
 (deftest test-infobox-type
   (testing "Extract infobox type from wiki text")
   (is (= nil (infobox-type some-wiki)))
-  (is (= "university" (infobox-type stanford-wiki)))
+  (is (= "university fun" (infobox-type stanford-wiki)))
 )
 

@@ -14,6 +14,9 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class TopicSensitivePageRank {
     public static double BETA = 0.85;
@@ -184,7 +187,86 @@ public class TopicSensitivePageRank {
         return ret;
     }
 
-    public static void rankInPlace(List<IntermediateTSPRNode> nodes, int numIterations) {
+    public static class RankInPlaceRunnable implements Runnable {
+        final double sum;
+        final int topicNum;
+        final List<IntermediateTSPRNode> nodes;
+        final Map<Long, IntermediateTSPRNode> nodeById;
+        final int numNodes;
+        final double convergence;
+        public RankInPlaceRunnable(Map<Long, IntermediateTSPRNode> nodeById,
+                                   List<IntermediateTSPRNode> nodes, double sum, int topicNum,
+                                   double convergence) {
+            this.nodeById = nodeById;
+            this.nodes = nodes;
+            this.sum = sum;
+            this.topicNum = topicNum;
+            this.numNodes = nodes.size();
+            this.convergence = convergence;
+        }
+
+        @Override
+        public void run() {
+            double [] lastRank = new double[numNodes];
+            double [] thisRank = new double[numNodes];
+            final int numIterations = 15;
+
+
+            for(int iteration = 0; ; iteration++) {
+                double []tmp = thisRank;
+                thisRank = lastRank;
+                lastRank = tmp;
+                if(iteration == 0) {
+                    // Initialize
+                    for(IntermediateTSPRNode node : nodes) {
+                        thisRank[node.linearId] = node.lda[topicNum] / sum;
+                    }
+                } else {
+                    // Clear old values
+                    for(int i = 0; i < numNodes; i++) {
+                        thisRank[i] = 0.0;
+                    }
+                }
+
+                // Power iteration
+                for(IntermediateTSPRNode node : nodes) {
+                    int numNeighbors = node.edges.length;
+                    double contribution = BETA * lastRank[node.linearId] / numNeighbors;
+                    for(long targetId : node.edges)  {
+                        IntermediateTSPRNode neighbor = nodeById.get(targetId);
+                        thisRank[neighbor.linearId] += contribution;
+                    }
+                }
+
+                // Reinsert leaked
+                double topicSum = 0.0;
+                for(IntermediateTSPRNode node : nodes) {
+                    topicSum += thisRank[node.linearId];
+                }
+
+                double difference = 0.0;
+                for(IntermediateTSPRNode node : nodes) {
+                    thisRank[node.linearId] += (1.0 - topicSum) * (node.lda[topicNum] / sum);
+                    // Calculate L1 difference too
+                    difference += Math.abs(thisRank[node.linearId] - lastRank[node.linearId]);
+                }
+
+                System.err.println("Pagerank topic " + topicNum + " iteration "
+                        + iteration + ": delta=" + difference);
+
+                if(difference < convergence) {
+                    break;
+                }
+            }
+
+
+            for(IntermediateTSPRNode node : nodes) {
+                node.tspr[topicNum] = thisRank[node.linearId];
+            }
+        }
+    }
+
+    public static void rankInPlace(List<IntermediateTSPRNode> nodes, double convergence) throws InterruptedException {
         if(nodes.size() == 0) {
             return;
         }
@@ -204,69 +286,12 @@ public class TopicSensitivePageRank {
             nodeById.put(node.id, node);
         }
 
+        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 2);
         System.out.println("Nodes " + numNodes);
-        System.out.println("LDA sum " + ldaSums[0]);
-
-
-        double [][] lastRank = new double[numNodes][numTopics];
-        double [][] thisRank = new double[numNodes][numTopics];
-
-        for(int iteration = 0; iteration < numIterations; iteration++) {
-            double [][]tmp = thisRank;
-            thisRank = lastRank;
-            lastRank = tmp;
-            if(iteration == 0) {
-                // Initialize
-                for(IntermediateTSPRNode node : nodes) {
-                    for(int j = 0; j < numTopics; j++) {
-                        thisRank[node.linearId][j] = node.lda[j] / ldaSums[j];
-                    }
-                }
-            } else {
-                // Clear old values
-                for(int i = 0; i < numNodes; i++) {
-                    for(int j = 0; j < numTopics; j++) {
-                        thisRank[i][j] = 0.0;
-                    }
-                }
-            }
-
-            // Power iteration
-            for(IntermediateTSPRNode node : nodes) {
-                int numNeighbors = node.edges.length;
-                for(int j = 0; j < numTopics; j++) {
-                    double contribution = BETA * lastRank[node.linearId][j] / numNeighbors;
-                    for(long targetId : node.edges)  {
-                        IntermediateTSPRNode neighbor = nodeById.get(targetId);
-                        thisRank[neighbor.linearId][j] += contribution;
-                    }
-                }
-            }
-
-            // Reinsert leaked
-            double []topicSums = new double[numTopics];
-            for(IntermediateTSPRNode node : nodes) {
-                for(int j = 0; j < numTopics; j++) {
-                    topicSums[j] += thisRank[node.linearId][j];
-                }
-            }
-
-            double difference = 0.0;
-            for(IntermediateTSPRNode node : nodes) {
-                for(int j = 0; j < numTopics; j++) {
-                    thisRank[node.linearId][j] += (1.0 - topicSums[j]) * (node.lda[j] / ldaSums[j]);
-                    // Calculate L1 difference too
-                    difference += Math.abs(thisRank[node.linearId][j] - lastRank[node.linearId][j]);
-                }
-            }
-
-            System.err.println("Pagerank iteration " + iteration + ": average delta=" + difference / numTopics);
+        for(int tnum = 0; tnum < numTopics; tnum++) {
+            executorService.submit(new RankInPlaceRunnable(nodeById, nodes, ldaSums[tnum], tnum, convergence));
         }
-
-
-
-        for(IntermediateTSPRNode node : nodes) {
-            System.arraycopy(thisRank[node.linearId], 0, node.tspr, 0, numTopics);
-        }
+        executorService.shutdown();
+        executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
     }
 }

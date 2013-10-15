@@ -21,7 +21,8 @@
 
 (defn valid-article? [^Data$DumpPage page] (not (.hasRedirect page)))
 (defn textual-links [^String wiki-text] (map #(% 1) (re-seq #"\[\[(?:[^|\]]*\|)?([^\]]+)\]\]" wiki-text)))
-(defn infobox-type [^String wiki-text] (first (map #(% 1) (re-seq #"\{\{[Ii]nfobox\s+(\S+)" wiki-text))))
+(defn infobox-type [^String wiki-text] (first (map #(string/trim (string/replace (% 1) #"\s+" " "))
+                                                      (re-seq #"\{\{[Ii]nfobox\s+([^<.!]+)" wiki-text))))
 
 (defn extract-redirects [pages]
   (into {} (for [^Data$DumpPage page pages :when (.hasRedirect page)]
@@ -72,13 +73,14 @@
   )
 )
 
-(defn tspr [^String input-file ^String lda-file ^String output-file ^Integer num-iterations]
+(defn tspr [^String input-file ^String lda-file ^String output-file ^Double convergence]
   (let [
          lda-map (dbg-b "Reading lda map" (TopicSensitivePageRank/readLDAMap lda-file))
-         intermediate-vector (dbg-b "Reading intermediate nodes" (java.util.ArrayList. (make-intermediate-tspr-nodes input-file lda-map)))
+         intermediate-vector (dbg-b "Reading intermediate nodes" (java.util.ArrayList.
+                                                                   (make-intermediate-tspr-nodes input-file lda-map)))
        ]
     (do
-      (TopicSensitivePageRank/rankInPlace intermediate-vector num-iterations)
+      (TopicSensitivePageRank/rankInPlace intermediate-vector convergence)
       (with-open [w (io/output-stream output-file)]
         (doseq [^IntermediateTSPRNode node intermediate-vector]
           (.writeDelimitedTo (.toProto node) w)
