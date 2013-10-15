@@ -1,7 +1,9 @@
 package com.thomasdimson.wikipedia.lda.java;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.thomasdimson.wikipedia.Data;
@@ -15,21 +17,22 @@ import java.util.Map;
 
 public class TopicSensitivePageRank {
     public static double BETA = 0.85;
-    public static int NUM_ITERATIONS = 50;
+
+    private static double chiSquareScore(int index, Data.TSPRGraphNode node) {
+        double observed = node.getTspr(index);
+        double expected = node.getTspr(node.getTsprCount() - 1);
+        return Math.pow(observed - expected, 2) / expected;
+    }
+
+    private static double massScore(int index, Data.TSPRGraphNode node) {
+        return node.getTspr(index) / node.getTspr(node.getTsprCount() - 1);
+    }
 
     private static Ordering<Data.TSPRGraphNode> byLDA(final int index) {
         return new Ordering<Data.TSPRGraphNode>() {
             @Override
             public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
-                boolean special1 = WikipediaHandler.isSpecialTitle(tsprGraphNode.getTitle());
-                boolean special2 = WikipediaHandler.isSpecialTitle(tsprGraphNode2.getTitle());
-                if(special1 && special2 || !special1 && !special2) {
-                    return Double.compare(tsprGraphNode.getLda(index), tsprGraphNode2.getLda(index));
-                } else if (special2) {
-                    return 1;
-                } else {
-                    return -1;
-                }
+                return Double.compare(tsprGraphNode.getLda(index), tsprGraphNode2.getLda(index));
             }
         };
     }
@@ -38,25 +41,73 @@ public class TopicSensitivePageRank {
         return new Ordering<Data.TSPRGraphNode>() {
             @Override
             public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
-                boolean special1 = WikipediaHandler.isSpecialTitle(tsprGraphNode.getTitle());
-                boolean special2 = WikipediaHandler.isSpecialTitle(tsprGraphNode2.getTitle());
-                if(special1 && special2 || !special1 && !special2) {
-                    return Double.compare(tsprGraphNode.getTspr(index), tsprGraphNode2.getTspr(index));
-                } else if (special2) {
-                    return 1;
-                } else {
-                    return -1;
-                }
+                return Double.compare(tsprGraphNode.getTspr(index), tsprGraphNode2.getTspr(index));
             }
         };
     }
 
-    public static List<Data.TSPRGraphNode> topKLDA(Iterator<Data.TSPRGraphNode> nodes, int index, int k) {
-        return byLDA(index).greatestOf(nodes, k);
+    private static Ordering<Data.TSPRGraphNode> byChiSquaredTSPR(final int index) {
+        return new Ordering<Data.TSPRGraphNode>() {
+            @Override
+            public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
+                return Double.compare(chiSquareScore(index, tsprGraphNode), chiSquareScore(index, tsprGraphNode2));
+            }
+        };
     }
 
-    public static List<Data.TSPRGraphNode> topKTSPR(Iterator<Data.TSPRGraphNode> nodes, int index, int k) {
-        return byTSPR(index).greatestOf(nodes, k);
+    private static Ordering<Data.TSPRGraphNode> byMassTSPR(final int index) {
+        return new Ordering<Data.TSPRGraphNode>() {
+            @Override
+            public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
+                return Double.compare(massScore(index, tsprGraphNode), massScore(index, tsprGraphNode2));
+            }
+        };
+    }
+
+    public static List<Data.TSPRGraphNode> topBy(Ordering<Data.TSPRGraphNode> ordering,
+                                                 Iterator<Data.TSPRGraphNode> nodes, int k,
+                                                 final String infoboxMatch) {
+        final boolean matchExclusive = infoboxMatch != null && infoboxMatch.startsWith("^");
+        final String match;
+        if(matchExclusive) {
+            match = infoboxMatch.substring(1);
+        } else {
+            match = infoboxMatch;
+        }
+
+        return ordering.greatestOf(Iterators.filter(nodes, new Predicate<Data.TSPRGraphNode>() {
+            @Override
+            public boolean apply(Data.TSPRGraphNode tsprGraphNode) {
+                if(match == null) {
+                    return true;
+                } else if(matchExclusive) {
+                    return !match.equalsIgnoreCase(tsprGraphNode.getInfoboxType());
+                } else {
+                    return match.equalsIgnoreCase(tsprGraphNode.getInfoboxType());
+                }
+            }
+        }), k);
+
+    }
+
+    public static List<Data.TSPRGraphNode> topKLDA(Iterator<Data.TSPRGraphNode> nodes, int index, int k,
+                                                   final String infoboxMatch) {
+        return topBy(byLDA(index), nodes, k, infoboxMatch);
+    }
+
+    public static List<Data.TSPRGraphNode> topKTSPR(Iterator<Data.TSPRGraphNode> nodes, int index, int k,
+                                                    final String infoboxMatch) {
+        return topBy(byTSPR(index), nodes, k, infoboxMatch);
+    }
+
+    public static List<Data.TSPRGraphNode> topKChiSquareTSPR(Iterator<Data.TSPRGraphNode> nodes, int index, int k,
+                                                    final String infoboxMatch) {
+        return topBy(byChiSquaredTSPR(index), nodes, k, infoboxMatch);
+    }
+
+    public static List<Data.TSPRGraphNode> topKMassTSPR(Iterator<Data.TSPRGraphNode> nodes, int index, int k,
+                                                             final String infoboxMatch) {
+        return topBy(byMassTSPR(index), nodes, k, infoboxMatch);
     }
 
     public static Iterator<Data.TSPRGraphNode> newTSPRGraphNodeIterator(String filename) throws IOException {
