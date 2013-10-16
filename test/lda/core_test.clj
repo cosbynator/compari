@@ -11,6 +11,7 @@
 {{Infobox   university    fun <!--goodness-->
 |image_name= Stanford University seal 2003.svg")
 
+
 (deftest test-textual-links
   (testing "Compute textual links from wiki markup")
   (is (= ["Wikipedia" "free" "encyclopedia" "anyone can edit"] (into [] (textual-links some-wiki))))
@@ -18,7 +19,7 @@
 
 (deftest test-infobox-type
   (testing "Extract infobox type from wiki text")
-  (is (= nil (infobox-type some-wiki)))
   (is (= "university fun" (infobox-type stanford-wiki)))
+  (is (= nil (infobox-type some-wiki)))
 )
 

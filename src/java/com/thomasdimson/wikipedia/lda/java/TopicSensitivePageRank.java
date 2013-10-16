@@ -209,7 +209,6 @@ public class TopicSensitivePageRank {
         public void run() {
             double [] lastRank = new double[numNodes];
             double [] thisRank = new double[numNodes];
-            final int numIterations = 15;
 
 
             for(int iteration = 0; ; iteration++) {
