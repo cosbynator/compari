@@ -10,6 +10,7 @@ public class IntermediateTSPRNode {
 
     public final double[] lda;
     public final double[] tspr;
+    public final double[] lspr;
     public final String infoboxType;
 
     public IntermediateTSPRNode(int linearId, long id, String title, long []edges, double[] lda, String infoboxType) {
@@ -19,6 +20,7 @@ public class IntermediateTSPRNode {
         this.edges = edges;
         this.lda = lda;
         this.tspr = new double[this.lda.length];
+        this.lspr = new double[this.lda.length];
         this.infoboxType = infoboxType;
     }
 
@@ -32,6 +34,7 @@ public class IntermediateTSPRNode {
         for(int i = 0; i < this.lda.length; i++) {
             builder.addLda(lda[i]);
             builder.addTspr(tspr[i]);
+            builder.addLspr(lspr[i]);
         }
         return builder.build();
     }

@@ -22,5 +22,6 @@ message TSPRGraphNode {
     required string title = 2;
     repeated double lda = 3;
     repeated double tspr = 4;
-    optional string infobox_type = 5;
+    repeated double lspr = 5;
+    optional string infobox_type = 6;
 }
