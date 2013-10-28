@@ -5,6 +5,7 @@
   :dependencies [
                   [intervox/clj-progress "0.1.1"]
                   [cc.mallet/mallet "2.0.7"]
+                  [instaparse "1.2.6"]
                   [com.google.protobuf/protobuf-java "2.4.1"]
                   [org.flatland/protobuf "0.7.1"]
                   [com.google.guava/guava "15.0"]
