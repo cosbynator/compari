@@ -29,6 +29,19 @@ public class TopicSensitivePageRank {
         return node.getTspr(index) / node.getTspr(node.getTsprCount() - 1);
     }
 
+    private static double cosineSimilarity(List<Double> n1, List<Double> n2) {
+        double norm1 = 0;
+        double norm2 = 0;
+        double dot = 0;
+        for(int i = 0; i < n1.size(); i++) {
+            norm1 += n1.get(i) * n1.get(i);
+            norm2 += n2.get(i) * n2.get(i);
+            dot += n1.get(i) * n2.get(i);
+        }
+
+        return dot / (Math.sqrt(norm1) * Math.sqrt(norm2));
+    }
+
     private static Ordering<Data.TSPRGraphNode> byLDA(final int index) {
         return new Ordering<Data.TSPRGraphNode>() {
             @Override
@@ -43,6 +56,35 @@ public class TopicSensitivePageRank {
             @Override
             public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
                 return Double.compare(tsprGraphNode.getTspr(index), tsprGraphNode2.getTspr(index));
+            }
+        };
+    }
+
+    private static Ordering<Data.TSPRGraphNode> byLSPR(final int index) {
+        return new Ordering<Data.TSPRGraphNode>() {
+            @Override
+            public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
+                return Double.compare(tsprGraphNode.getLspr(index), tsprGraphNode2.getLspr(index));
+            }
+        };
+    }
+
+    private static Ordering<Data.TSPRGraphNode> byTSPRCosine(final Data.TSPRGraphNode simNode) {
+        return new Ordering<Data.TSPRGraphNode>() {
+            @Override
+            public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
+                return Double.compare(cosineSimilarity(simNode.getTsprList(), tsprGraphNode.getTsprList()),
+                                      cosineSimilarity(simNode.getTsprList(), tsprGraphNode2.getTsprList()));
+            }
+        };
+    }
+
+    private static Ordering<Data.TSPRGraphNode> byLSPRCosine(final Data.TSPRGraphNode simNode) {
+        return new Ordering<Data.TSPRGraphNode>() {
+            @Override
+            public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
+                return Double.compare(cosineSimilarity(simNode.getLsprList(), tsprGraphNode.getLsprList()),
+                        cosineSimilarity(simNode.getLsprList(), tsprGraphNode2.getLsprList()));
             }
         };
     }
@@ -99,6 +141,23 @@ public class TopicSensitivePageRank {
     public static List<Data.TSPRGraphNode> topKTSPR(Iterator<Data.TSPRGraphNode> nodes, int index, int k,
                                                     final String infoboxMatch) {
         return topBy(byTSPR(index), nodes, k, infoboxMatch);
+    }
+
+    public static List<Data.TSPRGraphNode> topKLSPR(Iterator<Data.TSPRGraphNode> nodes, int index, int k,
+                                                    final String infoboxMatch) {
+        return topBy(byLSPR(index), nodes, k, infoboxMatch);
+    }
+
+    public static List<Data.TSPRGraphNode> topKLSPRSim(Data.TSPRGraphNode simNode, Iterator<Data.TSPRGraphNode> nodes,
+                                                       int index, int k,
+                                                    final String infoboxMatch) {
+        return topBy(byLSPRCosine(simNode), nodes, k, infoboxMatch);
+    }
+
+    public static List<Data.TSPRGraphNode> topKTSPRSim(Data.TSPRGraphNode simNode, Iterator<Data.TSPRGraphNode> nodes,
+                                                       int index, int k,
+                                                       final String infoboxMatch) {
+        return topBy(byTSPRCosine(simNode), nodes, k, infoboxMatch);
     }
 
     public static List<Data.TSPRGraphNode> topKChiSquareTSPR(Iterator<Data.TSPRGraphNode> nodes, int index, int k,
