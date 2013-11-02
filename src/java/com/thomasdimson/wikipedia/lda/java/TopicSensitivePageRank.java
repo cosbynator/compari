@@ -173,7 +173,7 @@ public class TopicSensitivePageRank {
 
     public static List<Data.TSPRGraphNode> TSPRNodesFromFile(String filename) throws IOException {
         int estimatedSize = 6000000;
-        List<Data.TSPRGraphNode> ret = Lists.newArrayListWithExpectedSize(estimatedSize);
+        List<Data.TSPRGraphNode> ret = Lists.newArrayListWithCapacity(estimatedSize);
         Iterator<Data.TSPRGraphNode> it = newTSPRGraphNodeIterator(filename);
         while(it.hasNext()) {
             ret.add(it.next());
