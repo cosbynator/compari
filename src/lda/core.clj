@@ -82,6 +82,7 @@
          algo (if (= (string/lower-case algorithm-type) "lspr") TopicSensitivePageRank$TSPRType/LSPR TopicSensitivePageRank$TSPRType/TSPR)
        ]
     (do
+      (println "Using algorithm" algo)
       (TopicSensitivePageRank/rankInPlace intermediate-vector convergence algo)
       (with-open [w (io/output-stream output-file)]
         (doseq [^IntermediateTSPRNode node intermediate-vector]
