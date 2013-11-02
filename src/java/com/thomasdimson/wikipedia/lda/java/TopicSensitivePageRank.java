@@ -171,7 +171,7 @@ public class TopicSensitivePageRank {
         return topBy(byMassTSPR(index), nodes, k, infoboxMatch);
     }
 
-    public List<Data.TSPRGraphNode> TSPRNodesFromFile(String filename) throws IOException {
+    public static List<Data.TSPRGraphNode> TSPRNodesFromFile(String filename) throws IOException {
         int estimatedSize = 6000000;
         List<Data.TSPRGraphNode> ret = Lists.newArrayListWithExpectedSize(estimatedSize);
         Iterator<Data.TSPRGraphNode> it = newTSPRGraphNodeIterator(filename);
