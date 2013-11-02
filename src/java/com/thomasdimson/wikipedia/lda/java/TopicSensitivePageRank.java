@@ -3,6 +3,7 @@ package com.thomasdimson.wikipedia.lda.java;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.thomasdimson.wikipedia.Data;
@@ -168,6 +169,16 @@ public class TopicSensitivePageRank {
     public static List<Data.TSPRGraphNode> topKMassTSPR(Iterator<Data.TSPRGraphNode> nodes, int index, int k,
                                                              final String infoboxMatch) {
         return topBy(byMassTSPR(index), nodes, k, infoboxMatch);
+    }
+
+    public List<Data.TSPRGraphNode> TSPRNodesFromFile(String filename) throws IOException {
+        int estimatedSize = 6000000;
+        List<Data.TSPRGraphNode> ret = Lists.newArrayListWithExpectedSize(estimatedSize);
+        Iterator<Data.TSPRGraphNode> it = newTSPRGraphNodeIterator(filename);
+        while(it.hasNext()) {
+            ret.add(it.next());
+        }
+        return ret;
     }
 
     public static Iterator<Data.TSPRGraphNode> newTSPRGraphNodeIterator(String filename) throws IOException {
