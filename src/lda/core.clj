@@ -9,6 +9,7 @@
 (import 'com.thomasdimson.wikipedia.lda.java.WikipediaHandler)
 (import 'com.thomasdimson.wikipedia.lda.java.IntermediateTSPRNode)
 (import 'com.thomasdimson.wikipedia.lda.java.TopicSensitivePageRank)
+(import 'com.thomasdimson.wikipedia.lda.java.TopicSensitivePageRank$TSPRType)
 (import 'com.thomasdimson.wikipedia.Data$DumpPage)
 (import 'com.thomasdimson.wikipedia.Data$WikiGraphNode)
 
@@ -73,14 +74,15 @@
   )
 )
 
-(defn tspr [^String input-file ^String lda-file ^String output-file ^Double convergence]
+(defn tspr [^String input-file ^String lda-file ^String output-file ^Double convergence algorithm-type]
   (let [
          lda-map (dbg-b "Reading lda map" (TopicSensitivePageRank/readLDAMap lda-file))
          intermediate-vector (dbg-b "Reading intermediate nodes" (java.util.ArrayList.
                                                                    (make-intermediate-tspr-nodes input-file lda-map)))
+         algo (if (= (string/lower-case algorithm-type) "lspr") TopicSensitivePageRank$TSPRType/LSPR TopicSensitivePageRank$TSPRType/TSPR)
        ]
     (do
-      (TopicSensitivePageRank/rankInPlace intermediate-vector convergence)
+      (TopicSensitivePageRank/rankInPlace intermediate-vector convergence algo)
       (with-open [w (io/output-stream output-file)]
         (doseq [^IntermediateTSPRNode node intermediate-vector]
           (.writeDelimitedTo (.toProto node) w)
