@@ -61,15 +61,6 @@ public class TopicSensitivePageRank {
         };
     }
 
-    private static Ordering<Data.TSPRGraphNode> byLSPR(final int index) {
-        return new Ordering<Data.TSPRGraphNode>() {
-            @Override
-            public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
-                return Double.compare(tsprGraphNode.getLspr(index), tsprGraphNode2.getLspr(index));
-            }
-        };
-    }
-
     private static Ordering<Data.TSPRGraphNode> byTSPRCosine(final Data.TSPRGraphNode simNode) {
         return new Ordering<Data.TSPRGraphNode>() {
             @Override
@@ -80,12 +71,12 @@ public class TopicSensitivePageRank {
         };
     }
 
-    private static Ordering<Data.TSPRGraphNode> byLSPRCosine(final Data.TSPRGraphNode simNode) {
+    private static Ordering<Data.TSPRGraphNode> byLDACosine(final Data.TSPRGraphNode simNode) {
         return new Ordering<Data.TSPRGraphNode>() {
             @Override
             public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
-                return Double.compare(cosineSimilarity(simNode.getLsprList(), tsprGraphNode.getLsprList()),
-                        cosineSimilarity(simNode.getLsprList(), tsprGraphNode2.getLsprList()));
+                return Double.compare(cosineSimilarity(simNode.getLdaList(), tsprGraphNode.getLdaList()),
+                        cosineSimilarity(simNode.getLdaList(), tsprGraphNode2.getLdaList()));
             }
         };
     }
@@ -144,22 +135,18 @@ public class TopicSensitivePageRank {
         return topBy(byTSPR(index), nodes, k, infoboxMatch);
     }
 
-    public static List<Data.TSPRGraphNode> topKLSPR(Iterator<Data.TSPRGraphNode> nodes, int index, int k,
-                                                    final String infoboxMatch) {
-        return topBy(byLSPR(index), nodes, k, infoboxMatch);
-    }
-
-    public static List<Data.TSPRGraphNode> topKLSPRSim(Data.TSPRGraphNode simNode, Iterator<Data.TSPRGraphNode> nodes,
-                                                       int index, int k,
-                                                    final String infoboxMatch) {
-        return topBy(byLSPRCosine(simNode), nodes, k, infoboxMatch);
-    }
-
     public static List<Data.TSPRGraphNode> topKTSPRSim(Data.TSPRGraphNode simNode, Iterator<Data.TSPRGraphNode> nodes,
                                                        int index, int k,
                                                        final String infoboxMatch) {
         return topBy(byTSPRCosine(simNode), nodes, k, infoboxMatch);
     }
+
+    public static List<Data.TSPRGraphNode> topKLDASim(Data.TSPRGraphNode simNode, Iterator<Data.TSPRGraphNode> nodes,
+                                                       int index, int k,
+                                                       final String infoboxMatch) {
+        return topBy(byLDACosine(simNode), nodes, k, infoboxMatch);
+    }
+
 
     public static List<Data.TSPRGraphNode> topKChiSquareTSPR(Iterator<Data.TSPRGraphNode> nodes, int index, int k,
                                                     final String infoboxMatch) {
@@ -169,6 +156,24 @@ public class TopicSensitivePageRank {
     public static List<Data.TSPRGraphNode> topKMassTSPR(Iterator<Data.TSPRGraphNode> nodes, int index, int k,
                                                              final String infoboxMatch) {
         return topBy(byMassTSPR(index), nodes, k, infoboxMatch);
+    }
+
+    public static Data.TSPRGraphNode findNodeNamed(Iterator<Data.TSPRGraphNode> nodes, String title, boolean caseSensitive) {
+        if(caseSensitive) {
+            while(nodes.hasNext()) {
+                Data.TSPRGraphNode next = nodes.next();
+                if(next.getTitle().equals(title)) {
+                    return next;
+                }
+            }
+        } else {
+            Data.TSPRGraphNode next = nodes.next();
+            if(next.getTitle().equalsIgnoreCase(title)) {
+                return next;
+            }
+        }
+
+        return null;
     }
 
     public static List<Data.TSPRGraphNode> TSPRNodesFromFile(String filename) throws IOException {
@@ -424,7 +429,12 @@ public class TopicSensitivePageRank {
         }
     }
 
-    public static void rankInPlace(List<IntermediateTSPRNode> nodes, double convergence) throws InterruptedException {
+
+    public static enum TSPRType {
+        TSPR,
+        LSPR
+    }
+    public static void rankInPlace(List<IntermediateTSPRNode> nodes, double convergence, TSPRType type) throws InterruptedException {
         if(nodes.size() == 0) {
             return;
         }
@@ -447,8 +457,11 @@ public class TopicSensitivePageRank {
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 2);
         System.out.println("Nodes " + numNodes);
         for(int tnum = 0; tnum < numTopics; tnum++) {
-            executorService.submit(new TsprInPlaceRunnable(nodeById, nodes, ldaSums[tnum], tnum, convergence));
-            executorService.submit(new LsprInPlaceRunnable(nodeById, nodes, ldaSums[tnum], tnum, convergence));
+            if(type == TSPRType.TSPR) {
+                executorService.submit(new TsprInPlaceRunnable(nodeById, nodes, ldaSums[tnum], tnum, convergence));
+            } else {
+                executorService.submit(new LsprInPlaceRunnable(nodeById, nodes, ldaSums[tnum], tnum, convergence));
+            }
         }
         executorService.shutdown();
         executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
