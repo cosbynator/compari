@@ -176,6 +176,7 @@ public class TopicSensitivePageRank {
         try {
             return new Iterator<Data.TSPRGraphNode>() {
                 Data.TSPRGraphNode nextMessage = Data.TSPRGraphNode.parseDelimitedFrom(inputStream);
+                int count = 0;
 
                 @Override
                 public boolean hasNext() {
@@ -189,6 +190,10 @@ public class TopicSensitivePageRank {
                         nextMessage = Data.TSPRGraphNode.parseDelimitedFrom(inputStream);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
+                    }
+                    count++;
+                    if(count % 10000 == 0) {
+                        System.out.println("TSPR Node Iterator: read " + count);
                     }
                     return ret;
                 }
