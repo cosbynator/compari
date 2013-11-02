@@ -3,6 +3,7 @@
   :plugins [[lein-protobuf "0.3.1"]]
   :java-source-paths ["src/java"]
   :dependencies [
+                  [org.postgresql/postgresql "9.2-1003-jdbc4"]
                   [intervox/clj-progress "0.1.1"]
                   [cc.mallet/mallet "2.0.7"]
                   [instaparse "1.2.6"]

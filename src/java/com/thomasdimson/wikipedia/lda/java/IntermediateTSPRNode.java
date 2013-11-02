@@ -34,7 +34,6 @@ public class IntermediateTSPRNode {
         for(int i = 0; i < this.lda.length; i++) {
             builder.addLda(lda[i]);
             builder.addTspr(tspr[i]);
-            builder.addLspr(lspr[i]);
         }
         return builder.build();
     }
