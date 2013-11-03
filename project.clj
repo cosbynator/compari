@@ -1,5 +1,5 @@
-(defproject lda "0.1.1"
-  :description "Latent Dirichlet Allocation + Topic Sensitive PageRank for Wikipedia"
+(defproject compari "0.1.2"
+  :description "Compari - a comparison engine"
   :plugins [
              [lein-ring "0.8.7"]
              [lein-protobuf "0.3.1"]
