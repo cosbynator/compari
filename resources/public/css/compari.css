@@ -1,0 +1,28 @@
+input.query {
+    margin-top: 10px;
+    width: 100%;
+}
+
+input.query-submit {
+    padding: 0 30px 0 30px;
+    font-size: 12pt;
+}
+
+p.examples {
+    margin-top: 20px;
+    font-size: 10pt;
+    color: #777;
+}
+
+#parse {
+    border-bottom: 1px solid #bbb;
+    margin: 0 auto;
+    padding-bottom: 10px;
+    width: 90%;
+    font-size: 12pt;
+}
+
+.compare-ratio {
+    font-size: 48pt;
+    font-weight: bold;
+}

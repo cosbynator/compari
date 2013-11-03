@@ -1,5 +1,7 @@
 package com.thomasdimson.wikipedia.lda.java;
 
+import com.thomasdimson.wikipedia.Data;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -25,5 +27,13 @@ public class SimilarityUtils {
 
     public static double cosine(double dot, double n1, double n2) {
         return dot / (n1 * n2);
+    }
+
+    public static  double cosineLDA(Data.TSPRGraphNode n1, Data.TSPRGraphNode n2) {
+        return dot(n1.getLdaList(), n2.getLdaList()) / (norm(n1.getLdaList()) * norm(n2.getLdaList()));
+    }
+
+    public static double cosineTSPR(Data.TSPRGraphNode n1, Data.TSPRGraphNode n2) {
+        return dot(n1.getTsprList(), n2.getTsprList()) / (norm(n1.getTsprList()) * norm(n2.getTsprList()));
     }
 }

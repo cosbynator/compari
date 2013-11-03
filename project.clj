@@ -4,6 +4,7 @@
              [lein-ring "0.8.7"]
              [lein-protobuf "0.3.1"]
            ]
+  :jvm-opts ["-Xmx3G" "-Xms3G" "-server"]
   :dependencies [
                   [org.clojure/clojure "1.5.1"]
 

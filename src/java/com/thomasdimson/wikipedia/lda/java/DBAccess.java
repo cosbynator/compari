@@ -1,5 +1,6 @@
 package com.thomasdimson.wikipedia.lda.java;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Queues;
@@ -42,6 +43,37 @@ public class DBAccess {
         return null;
     }
 
+    public int determineTopicIndex(List<String> topics) throws SQLException {
+        if(topics.size() == 0) {
+            return 200;
+        }
+
+
+        double []sums = new double[201];
+
+        for(String topic : topics) {
+            System.out.println("'" + topic + "'");
+            TSPRGraphNode article = findArticle(topic);
+            if(article == null ){
+                continue;
+            }
+
+            for(int i = 0; i < article.getLdaCount(); i++) {
+                sums[i] += article.getLda(i);
+            }
+        }
+
+        double maxTopicSum = 0;
+        int maxTopic = 200;
+        for(int i = 0; i < sums.length - 1; i++) {
+            if(sums[i] > maxTopicSum) {
+                maxTopicSum = sums[i];
+                maxTopic = i;
+            }
+        }
+        return maxTopic;
+    }
+
     public boolean infoboxExists(String infobox) throws SQLException {
         PreparedStatement st = conn.prepareStatement("SELECT 1 FROM articles WHERE infobox=? LIMIT 1");
         st.setString(1, infobox);
@@ -75,10 +107,11 @@ public class DBAccess {
         double sourceNorm = SimilarityUtils.norm(source.getTsprList());
 
         PreparedStatement st = conn.prepareStatement("SELECT * FROM articles"); // ugh
-        st.setFetchSize(10000);
+        st.setFetchSize(100);
         PriorityQueue<SimTuple> q = Queues.newPriorityQueue();
                 ResultSet rs = st.executeQuery();
         try {
+            int i = 0;
             while(rs.next()) {
                 TSPRGraphNode other = row2obj(rs);
                 double otherNorm = SimilarityUtils.norm(other.getTsprList());
@@ -88,6 +121,10 @@ public class DBAccess {
                 if(q.size() > limit && q.peek().sim < t.sim) {
                     q.remove();
                     q.add(t);
+                }
+                i++;
+                if(i % 100 == 0) {
+                    System.out.println("Scanned up to "+ i);
                 }
             }
         } finally {
@@ -103,11 +140,11 @@ public class DBAccess {
     }
 
     public List<TSPRGraphNode> topByTSPRWithInfobox(int topic, String infobox, int limit) throws SQLException {
-        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles WHERE infobox=? ORDER BY tspr[?] LIMIT ?");
+        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles WHERE infobox=? ORDER BY tspr[?] DESC LIMIT ?");
         st.setFetchSize(DEFAULT_CURSOR_SIZE);
         try {
             st.setString(1, infobox);
-            st.setInt(2, topic);
+            st.setInt(2, topic + 1);
             st.setInt(3, limit);
             return listQuery(st);
         } finally {
@@ -116,10 +153,10 @@ public class DBAccess {
     }
 
     public List<TSPRGraphNode> topByTSPR(int topic, int limit) throws SQLException {
-        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles ORDER BY tspr[?] LIMIT ?");
+        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles ORDER BY tspr[?] DESC LIMIT ?");
         st.setFetchSize(DEFAULT_CURSOR_SIZE);
         try {
-            st.setInt(1, topic);
+            st.setInt(1, topic + 1);
             st.setInt(2, limit);
             return listQuery(st);
         } finally {
@@ -129,11 +166,11 @@ public class DBAccess {
 
 
     public List<TSPRGraphNode> topByLDAWithInfobox(int topic, String infobox, int limit) throws SQLException {
-        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles WHERE infobox=? ORDER BY lda[?] LIMIT ?");
+        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles WHERE infobox=? ORDER BY lda[?] DESC LIMIT ?");
         st.setFetchSize(DEFAULT_CURSOR_SIZE);
         try {
             st.setString(1, infobox);
-            st.setInt(2, topic);
+            st.setInt(2, topic + 1);
             st.setInt(3, limit);
             return listQuery(st);
         } finally {
@@ -142,10 +179,10 @@ public class DBAccess {
     }
 
     public List<TSPRGraphNode> topByLDA(int topic, int limit) throws SQLException {
-        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles ORDER BY lda[?] LIMIT ?");
+        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles ORDER BY lda[?] DESC LIMIT ?");
         st.setFetchSize(DEFAULT_CURSOR_SIZE);
         try {
-            st.setInt(1, topic);
+            st.setInt(1, topic + 1);
             st.setInt(2, limit);
             return listQuery(st);
         } finally {
@@ -205,7 +242,7 @@ public class DBAccess {
                 .setId(id)
                 .setTitle(title)
                 .setInfoboxType(infobox)
-                .addAllTspr(Arrays.asList(lda))
+                .addAllLda(Arrays.asList(lda))
                 .addAllTspr(Arrays.asList(tspr))
                 .build();
     }

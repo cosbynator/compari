@@ -2,6 +2,9 @@
   (:use [clojure.pprint :only [pprint]])
   (:require [clojure.string :as string])
   (:require [instaparse.core :as insta])
+  (:import com.thomasdimson.wikipedia.lda.java.DBAccess)
+  (:import com.thomasdimson.wikipedia.Data$TSPRGraphNode)
+  (:import com.thomasdimson.wikipedia.lda.java.SimilarityUtils)
 )
 
 (set! *warn-on-reflection* true)
@@ -34,12 +37,12 @@
       topk_question_phase = question_word (<sep> ('is'|'are'))?
       topk_indicator = ('the' <sep>)? ('top'|'most' <sep> 'influential'|'best'|'greatest')
 
-      topic_refinement = <'in'> <sep> topics
+      topic_refinement = <'in'> <sep> topics | <'related' sep 'to' sep> topics | <'similar' sep 'to' sep> topics
 
       question_word = 'who'|'what'|'which'|'Who'|'What'|'Which'
 
       <topics> = topic (<sep>? <'/'> topic)*
-      topic = word
+      topic = word |  <'\"'> word_nodblquote <'\"'> | <'\\''> word_nosglquote <'\\''>
       article_title = word (<sep> word)* |  <'\"'> word_nodblquote <'\"'> | <'\\''> word_nosglquote <'\\''>
 
       <word> = #'\\w+'
@@ -90,7 +93,7 @@
   (let [parse-tree (dbg (question-parse query))]
     (if (insta/failure? parse-tree)
       {:type :failure 
-       :explanation (insta/get-failure parse-tree)}
+       :explanation {:column (:column (insta/get-failure parse-tree))}}
       (case (first (first parse-tree))
         :similar_query (knn-query-template (first parse-tree))
         :compare_query (compare-template (first parse-tree))
@@ -101,8 +104,61 @@
   )
 )
 
-(defn template-explanation [query-template]
-  (case (:type query-template)
-    :knn (str "Similar articles to " (:article-title query-template))
+
+(defn closest-article ^Data$TSPRGraphNode [^DBAccess db title] (.findArticle db title))
+(defn closest-infobox [^DBAccess db infobox] infobox)
+(defn closest-topic [^DBAccess db topics] 
+  (when topics (.determineTopicIndex db topics))
+)
+
+(defn graph-node-obj [^Data$TSPRGraphNode n]
+  {
+   :title (.getTitle n)
+   :infobox (.getInfoboxType n)
+   :lda (into [] (.getLdaList n))
+   :tspr (into [] (.getTsprList n))
+  }
+)
+
+(defmulti perform-query :type)
+
+(defmethod perform-query :top_k [topk-template]
+  (let [db (DBAccess.)
+        limit 50
+        topic-index (closest-topic db (:topics topk-template))
+        ^String infobox (closest-infobox db (:infobox topk-template))
+        topk (if infobox 
+               (.topByTSPRWithInfobox db topic-index infobox limit)
+               (.topByTSPR db topic-index limit)
+              )
+        ]
+    {
+     :type :top_k
+     :infobox infobox
+     :topic-index topic-index
+     :topic-words (:topics topk-template)
+     :articles (into [] (map graph-node-obj topk))
+    }
   )
 )
+
+(defmethod perform-query :compare [compare-template]
+  (let [db (DBAccess.)
+        ^Data$TSPRGraphNode a1 (closest-article db (:first-article-title compare-template))
+        ^Data$TSPRGraphNode a2 (closest-article db (:second-article-title compare-template))
+        topic-index (closest-topic db (:topics compare-template))
+        ]
+    (when (and a1 a2)
+      {
+       :type :compare
+       :first-article (graph-node-obj a1)
+       :second-article (graph-node-obj a2)
+       :topic-index topic-index
+       :lda-cosine-similarity (SimilarityUtils/cosineLDA a1 a2)
+       :tspr-cosine-similarity (SimilarityUtils/cosineTSPR a1 a2)
+       :ratio (/ (.getTspr a1 topic-index) (.getTspr a2 topic-index))
+      }
+    )
+  )
+)
+

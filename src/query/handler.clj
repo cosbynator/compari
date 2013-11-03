@@ -22,6 +22,8 @@
       )
      (include-js
        "http://code.jquery.com/jquery-1.10.1.min.js"
+       "/js/spin.min.js"
+       "/js/underscore-min.js"
        "/js/compari.js"
       )
     ]
@@ -29,8 +31,8 @@
    [:body
     [:div {:class "container"}
       [:div {:class "jumbotron"}
-        [:h1 "Compari"]
-        [:form {:method "POST"}
+        [:h1 "compari"]
+        [:form {:id "query-form" :method "POST"}
           [:input {:type "text" :id "query" :name "query" :class "query"}]
           [:input {:type "submit" :id "query-submit" :class "query-submit" :value "Go" :disabled "disabled"}]
           [:p {:id "parse"} "&nbsp;"]
@@ -40,7 +42,9 @@
 
         ]
       ]
-      [:div {:class "row marketing"}]
+      [:div {:class "row marketing"}
+       [:div {:id "result"}]
+      ]
       [:div {:class "footer"}
         [:p "&copy; Thomas Dimson 2013"]
       ]
@@ -54,15 +58,12 @@
         :body (json/generate-string data)})
 
 (defn- query-request [query]
-  (let [query-template (q/extract-query-template query)]
-     (if (not query-template)
-         (home :explanation "Unable to parse query")
-         (let [template-explanation (q/template-explanation query-template)]
-          (home :explanation template-explanation)
-         )
-     )
-  )
-)
+  (let [template (q/extract-query-template query)]
+    (if (= :failure (:type template))
+      (json-response {:error "Could not parse query"} 400)
+      (json-response (q/perform-query template))
+    )
+))
 
 (defn query-parse [query] (json-response 
   {:parse (q/extract-query-template query)}
@@ -70,8 +71,8 @@
 
 (defroutes app-routes
   (GET "/" [] (home))
-  (POST "/" [query] (query-request query))
   (GET "/parse" [query] (query-parse query))
+  (GET "/query" [query] (query-request query))
   (route/resources "/")
   (route/not-found "404 Not found")
 )
