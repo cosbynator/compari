@@ -9,6 +9,7 @@
 
                   [compojure "1.1.6"]
                   [hiccup "1.0.4"]
+                  [clj-json "0.5.3"]
 
                   [org.postgresql/postgresql "9.2-1003-jdbc4"]
                   [intervox/clj-progress "0.1.1"]

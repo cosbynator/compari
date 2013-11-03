@@ -88,12 +88,16 @@
 
 (defn extract-query-template [query]
   (let [parse-tree (dbg (question-parse query))]
-    (case (first (first parse-tree))
-      :similar_query (knn-query-template (first parse-tree))
-      :compare_query (compare-template (first parse-tree))
-      :topk_query (topk-template (first parse-tree))
-      nil
-     )
+    (if (insta/failure? parse-tree)
+      {:type :failure 
+       :explanation (insta/get-failure parse-tree)}
+      (case (first (first parse-tree))
+        :similar_query (knn-query-template (first parse-tree))
+        :compare_query (compare-template (first parse-tree))
+        :topk_query (topk-template (first parse-tree))
+        nil
+      )
+    )
   )
 )
 

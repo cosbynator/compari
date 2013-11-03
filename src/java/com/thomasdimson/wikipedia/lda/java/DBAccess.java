@@ -12,8 +12,8 @@ import static com.thomasdimson.wikipedia.Data.TSPRGraphNode;
 
 public class DBAccess {
     private static final String URL = "jdbc:postgresql://localhost/wikirank";
-    private static final String USER = "postgresql";
-    private static final String PASSWORD = "postgresql";
+    private static final String USER = "postgres";
+    private static final String PASSWORD = "postgres";
     private static final int INSERT_BATCH_SIZE = 1000;
     private static final int DEFAULT_CURSOR_SIZE = 100;
 
@@ -40,6 +40,21 @@ public class DBAccess {
         }
 
         return null;
+    }
+
+    public boolean infoboxExists(String infobox) throws SQLException {
+        PreparedStatement st = conn.prepareStatement("SELECT 1 FROM articles WHERE infobox=? LIMIT 1");
+        st.setString(1, infobox);
+        ResultSet rs = st.executeQuery();
+        try {
+            if(rs.next()) {
+                return true;
+            }
+        } finally {
+            rs.close();
+            st.close();
+        }
+        return false;
     }
 
     private static class SimTuple implements Comparable<SimTuple> {
@@ -87,12 +102,39 @@ public class DBAccess {
         return ret;
     }
 
+    public List<TSPRGraphNode> topByTSPRWithInfobox(int topic, String infobox, int limit) throws SQLException {
+        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles WHERE infobox=? ORDER BY tspr[?] LIMIT ?");
+        st.setFetchSize(DEFAULT_CURSOR_SIZE);
+        try {
+            st.setString(1, infobox);
+            st.setInt(2, topic);
+            st.setInt(3, limit);
+            return listQuery(st);
+        } finally {
+            st.close();
+        }
+    }
+
     public List<TSPRGraphNode> topByTSPR(int topic, int limit) throws SQLException {
         PreparedStatement st = conn.prepareStatement("SELECT * FROM articles ORDER BY tspr[?] LIMIT ?");
         st.setFetchSize(DEFAULT_CURSOR_SIZE);
         try {
             st.setInt(1, topic);
             st.setInt(2, limit);
+            return listQuery(st);
+        } finally {
+            st.close();
+        }
+    }
+
+
+    public List<TSPRGraphNode> topByLDAWithInfobox(int topic, String infobox, int limit) throws SQLException {
+        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles WHERE infobox=? ORDER BY lda[?] LIMIT ?");
+        st.setFetchSize(DEFAULT_CURSOR_SIZE);
+        try {
+            st.setString(1, infobox);
+            st.setInt(2, topic);
+            st.setInt(3, limit);
             return listQuery(st);
         } finally {
             st.close();
@@ -130,11 +172,12 @@ public class DBAccess {
         while(nodes.hasNext()) {
             PreparedStatement st = conn.prepareStatement("INSERT INTO articles(id, title, infobox, lda, tspr) VALUES (?,?,?,?,?)");
             try {
+                conn.setAutoCommit(false);
                 for(int i = 0; i < INSERT_BATCH_SIZE && nodes.hasNext(); i++) {
                     TSPRGraphNode next = nodes.next();
 
-                    Array ldaArray = conn.createArrayOf("double precision", next.getLdaList().toArray());
-                    Array tsprArray = conn.createArrayOf("double precision", next.getTsprList().toArray());
+                    Array ldaArray = conn.createArrayOf("float8", next.getLdaList().toArray());
+                    Array tsprArray = conn.createArrayOf("float8", next.getTsprList().toArray());
 
                     st.setLong(1, next.getId());
                     st.setString(2, next.getTitle());
@@ -143,8 +186,10 @@ public class DBAccess {
                     st.setArray(5, tsprArray);
                     st.addBatch();
                 }
-                st.executeQuery();
+                st.executeBatch();
+                conn.commit();
             } finally {
+                conn.setAutoCommit(true);
                 st.close();
             }
         }

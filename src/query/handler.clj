@@ -4,8 +4,9 @@
             [compojure.route :as route]
             [hiccup.core :as h]
             [query.core :as q]
+            [clj-json.core :as json]
   )
-  (:use [hiccup.page :only [html5 include-css]])
+  (:use [hiccup.page :only [html5 include-css include-js]])
 )
 
 
@@ -17,33 +18,40 @@
         "/css/bootstrap.min.css"
         "/css/bootstrap-theme.min.css"
         "/css/jumbotron.css"
-        "/css/campari.css"
+        "/css/compari.css"
+      )
+     (include-js
+       "http://code.jquery.com/jquery-1.10.1.min.js"
+       "/js/compari.js"
       )
     ]
 
    [:body
     [:div {:class "container"}
       [:div {:class "jumbotron"}
-        [:h1 "Campari"]
+        [:h1 "Compari"]
         [:form {:method "POST"}
-          [:input {:type "text" :name "query" :class "query"}]
-          [:input {:type "submit" :class "query-submit" :value "Query"}]
+          [:input {:type "text" :id "query" :name "query" :class "query"}]
+          [:input {:type "submit" :id "query-submit" :class "query-submit" :value "Go" :disabled "disabled"}]
+          [:p {:id "parse"} "&nbsp;"]
           [:p {:class "examples"} 
            "e.g. Who is similar to Albert Einstein?"
           ]
+
         ]
       ]
-      [:div {:class "row marketing"} 
-       (when explanation
-         (str "Intepretation: " explanation)
-       )
-      ]
+      [:div {:class "row marketing"}]
       [:div {:class "footer"}
         [:p "&copy; Thomas Dimson 2013"]
       ]
     ]
    ]
 ))
+
+(defn json-response [data & [status]]
+    {:status (or status 200)
+        :headers {"Content-Type" "application/json"}
+        :body (json/generate-string data)})
 
 (defn- query-request [query]
   (let [query-template (q/extract-query-template query)]
@@ -56,10 +64,14 @@
   )
 )
 
+(defn query-parse [query] (json-response 
+  {:parse (q/extract-query-template query)}
+))
 
 (defroutes app-routes
   (GET "/" [] (home))
   (POST "/" [query] (query-request query))
+  (GET "/parse" [query] (query-parse query))
   (route/resources "/")
   (route/not-found "404 Not found")
 )
