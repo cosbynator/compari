@@ -21,8 +21,10 @@
 (def WikiGraphNode (protodef Data$WikiGraphNode))
 
 (defn valid-article? [^Data$DumpPage page] (not (.hasRedirect page)))
-(defn textual-links [^String wiki-text] (map #(% 1) (re-seq #"\[\[(?:[^|\]]*\|)?([^\]]+)\]\]" wiki-text)))
-(defn infobox-type [^String wiki-text] (first (map #(string/trim (string/replace (% 1) #"\s+" " "))
+(defn textual-links [^String wiki-text] (map #(% 1)
+                                          (re-seq #"\[\[([^|\[\]#]+)(?:[|#]|\]\])" wiki-text
+                                        )))
+(defn infobox-type [^String wiki-text] (first (map #(string/lower-case (string/trim (string/replace (% 1) #"\s+" " ")))
                                                       (re-seq #"\{\{[Ii]nfobox\s+([a-zA-Z0-9_\s]+)" wiki-text))))
 
 (defn extract-redirects [pages]

@@ -14,7 +14,7 @@
 
 (deftest test-textual-links
   (testing "Compute textual links from wiki markup")
-  (is (= ["Wikipedia" "free" "encyclopedia" "anyone can edit"] (into [] (textual-links some-wiki))))
+  (is (= ["Wikipedia" "free content" "encyclopedia" "Wikipedia:Introduction"] (into [] (textual-links some-wiki))))
   )
 
 (deftest test-infobox-type
