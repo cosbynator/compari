@@ -5,6 +5,7 @@
   (:import com.thomasdimson.wikipedia.lda.java.DBAccess)
   (:import com.thomasdimson.wikipedia.Data$TSPRGraphNode)
   (:import com.thomasdimson.wikipedia.lda.java.SimilarityUtils)
+  (:import com.thomasdimson.wikipedia.lda.java.TopicSensitivePageRank)
 )
 
 (set! *warn-on-reflection* true)
@@ -22,17 +23,20 @@
 (def question-parse
   (insta/parser
     "
-      <S> = (similar_query|compare_query|topk_query) <query_endings>?
-      query_endings = sep? ('?'|'.'|'!')
+      <S> = (similar_query|compare_query|topk_query) <query_endings>? 
+      query_endings = sep* ('?'|'.'|'!')? sep*
+
+      feature_specializer = <sep>? <'*'> <'*'> ('tspr' | 'lda') 
+      norm_specializer = <sep>? <'*'> <'*'> ('cosine' | 'l2') 
 
       compare_query = <'compare'> <sep> article_split (<sep> topic_refinement)?
       <article_split> = article_title <article_divider> article_title
       article_divider = sep ('and' | 'to') sep
       
-      similar_query = (<sim_question_phrase> <sep>)? <'similar'> (<sep> <'to'>)? <sep> article_title
+      similar_query = (<sim_question_phrase> <sep>)? <'similar'> (<sep> <'to'>)? <sep> article_title (feature_specializer | norm_specializer)*
       sim_question_phrase = question_word | question_word <sep> 'is'
 
-      topk_query = (<topk_question_phase> <sep>)? (<topk_indicator> <sep>)? topk_infobox (<sep> topic_refinement)?
+      topk_query = (<topk_question_phase> <sep>)? (<topk_indicator> <sep>)? topk_infobox (<sep> topic_refinement)? (feature_specializer)?
       topk_infobox = word
       topk_question_phase = question_word (<sep> ('is'|'are'))?
       topk_indicator = ('the' <sep>)? ('top'|'most' <sep> 'influential'|'best'|'greatest')
@@ -43,7 +47,7 @@
 
       <topics> = topic (<sep>? <'/'> topic)*
       topic = word |  <'\"'> word_nodblquote <'\"'> | <'\\''> word_nosglquote <'\\''>
-      article_title = word (<sep> word)* |  <'\"'> word_nodblquote <'\"'> | <'\\''> word_nosglquote <'\\''>
+      article_title = !'to' word (<sep> word)* |  <'\"'> word_nodblquote <'\"'> | <'\\''> word_nosglquote <'\\''>
 
       <word> = #'\\w+'
       <word_nodblquote> = #'[^\"]+'
@@ -58,6 +62,12 @@
 (defn lift-article-titles [tree] (map #(string/join " " (rest %)) (parse-elements :article_title tree)))
 (defn lift-topics [tree] (map #(second %) (parse-elements :topic tree)))
 (defn lift-topk-infobox [tree] (map #(second %) (parse-elements :topk_infobox tree)))
+(defn lift-norm [tree] (if-let [norm-element (first (parse-elements :norm_specializer tree))] 
+                         (keyword (second norm-element))
+                         :cosine))
+(defn lift-features [tree] (dbg-b tree (if-let [feature-element (first (parse-elements :feature_specializer tree))] 
+                         (keyword (second feature-element))
+                         :tspr)))
 
 ; Query templates 
 (defn- knn-query-template [sim-tree]
@@ -65,6 +75,8 @@
     {
      :type :knn
      :article-title article-title
+     :features (lift-features sim-tree)
+     :norm (lift-norm sim-tree)
     }
 ))
 
@@ -86,6 +98,7 @@
      :type :top_k
      :infobox infobox
      :topics topics
+     :features (lift-features topk-tree )
     }
 ))
 
@@ -111,6 +124,17 @@
   (when topics (.determineTopicIndex db topics))
 )
 
+(defn nearest-neighbors [source limit norm features]
+  (let [iterator (TopicSensitivePageRank/newTSPRGraphNodeIterator "data/full/lspr.dat")]
+    (cond
+      (and (= :tspr features) (= :cosine norm))  (SimilarityUtils/nearestNeighborsTSPRCosine source iterator limit)
+      (and (= :tspr features) (= :l2 norm)) (SimilarityUtils/nearestNeighborsTSPRL2 source iterator limit)
+      (and (= :lda features) (= :cosine norm))  (SimilarityUtils/nearestNeighborsLDACosine source iterator limit)
+      (and (= :lda features) (= :l2 norm))  (SimilarityUtils/nearestNeighborsLDAL2 source iterator limit)
+    )
+  )
+)
+
 (defn graph-node-obj [^Data$TSPRGraphNode n]
   {
    :title (.getTitle n)
@@ -121,6 +145,18 @@
 )
 
 (defmulti perform-query :type)
+
+(defmethod perform-query :knn [knn-template]
+  (let [db (DBAccess.)
+        limit 50
+        source-article (dbg (closest-article db (:article-title knn-template)))
+        knn (nearest-neighbors source-article limit (:norm knn-template) (:features knn-template))]
+    {
+      :type :knn
+      :source-article (graph-node-obj source-article)
+      :neighbors (into [] (map graph-node-obj knn))
+    }
+))
 
 (defmethod perform-query :top_k [topk-template]
   (let [db (DBAccess.)
@@ -155,7 +191,9 @@
        :second-article (graph-node-obj a2)
        :topic-index topic-index
        :lda-cosine-similarity (SimilarityUtils/cosineLDA a1 a2)
+       :lda-l2-similarity (/ 1.0 (SimilarityUtils/l2LDA a1 a2))
        :tspr-cosine-similarity (SimilarityUtils/cosineTSPR a1 a2)
+       :tspr-l2-similarity (/ 1.0 (SimilarityUtils/l2TSPR a1 a2))
        :ratio (/ (.getTspr a1 topic-index) (.getTspr a2 topic-index))
       }
     )

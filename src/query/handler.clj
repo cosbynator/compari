@@ -37,7 +37,11 @@
           [:input {:type "submit" :id "query-submit" :class "query-submit" :value "Go" :disabled "disabled"}]
           [:p {:id "parse"} "&nbsp;"]
           [:p {:class "examples"} 
-           "e.g. Who is similar to Albert Einstein?"
+           "What is similar to Albert Einstein?"
+           [:br]
+           "Compare Bill Gates to Steve Jobs."
+           [:br]
+           "What is the best film related to Anime?"
           ]
 
         ]

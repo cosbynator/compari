@@ -89,55 +89,6 @@ public class DBAccess {
         return false;
     }
 
-    private static class SimTuple implements Comparable<SimTuple> {
-        public final TSPRGraphNode node;
-        public final double sim;
-        public SimTuple(TSPRGraphNode node, double sim) {
-            this.node = node;
-            this.sim = sim;
-        }
-
-        @Override
-        public int compareTo(SimTuple o) {
-            return Double.compare(sim, o.sim);
-        }
-    }
-
-    public List<TSPRGraphNode> nearestNeighborsTSPR(TSPRGraphNode source, int limit) throws SQLException {
-        double sourceNorm = SimilarityUtils.norm(source.getTsprList());
-
-        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles"); // ugh
-        st.setFetchSize(100);
-        PriorityQueue<SimTuple> q = Queues.newPriorityQueue();
-                ResultSet rs = st.executeQuery();
-        try {
-            int i = 0;
-            while(rs.next()) {
-                TSPRGraphNode other = row2obj(rs);
-                double otherNorm = SimilarityUtils.norm(other.getTsprList());
-                double cosine = SimilarityUtils.cosine(SimilarityUtils.dot(source.getTsprList(),
-                                                       other.getTsprList()), sourceNorm, otherNorm);
-                SimTuple t = new SimTuple(other, cosine);
-                if(q.size() > limit && q.peek().sim < t.sim) {
-                    q.remove();
-                    q.add(t);
-                }
-                i++;
-                if(i % 100 == 0) {
-                    System.out.println("Scanned up to "+ i);
-                }
-            }
-        } finally {
-            rs.close();
-            st.close();
-        }
-
-        List<TSPRGraphNode> ret = Lists.newArrayListWithCapacity(q.size());
-        for(SimTuple t : q) {
-            ret.add(t.node);
-        }
-        return ret;
-    }
 
     public List<TSPRGraphNode> topByTSPRWithInfobox(int topic, String infobox, int limit) throws SQLException {
         PreparedStatement st = conn.prepareStatement("SELECT * FROM articles WHERE infobox=? ORDER BY tspr[?] DESC LIMIT ?");

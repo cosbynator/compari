@@ -15,7 +15,11 @@ $(document).ready(function() {
         var start;
         switch(parse.type) {
             case "knn":
-                return "K-Nearest Neighbors of <em>" + parse["article-title"] + "</em>";
+                start = "K-Nearest Neighbors of <em>" + parse["article-title"] + "</em>";
+                if(parse.features !== "tspr" || parse.norm !== "cosine") {
+                    start += "<small> using the " + parse.norm + " norm and " + parse.features + "</small>";
+                }
+                return start;
             case "compare":
                 start = "Comparing <em>" + parse["first-article-title"] + "</em>" + 
                                 " with <em> "+ parse["second-article-title"] + "</em>";
@@ -30,6 +34,10 @@ $(document).ready(function() {
                 }
                 if(parse.topics.length > 0) {
                     start += " in the topic matching <em>" + parse.topics.join(" or ") + "</em>";
+                }
+
+                if(parse.features !== "tspr") {
+                       start += "<small> using " + parse.features + "</small>";
                 }
                 return start;
             default:
@@ -51,7 +59,9 @@ $(document).ready(function() {
         "</div>" +
         "<p class='small'><ul>" +
             "<li>LDA-Cosine: <%= (lda_cosine * 100).toFixed(1) %>%" +
+            "<li>LDA-L2-Sim: <%= lda_l2_sim.toFixed(3) %>" +
             "<li>TSPR-Cosine: <%= (tspr_cosine * 100).toFixed(1) %>%" +
+            "<li>TSPR-L2-Sim: <%= tspr_l2_sim.toFixed(3) %>" +
         "</ul></p>"
     );
 
@@ -59,14 +69,52 @@ $(document).ready(function() {
         var ratio = o.ratio.toFixed(1) + "x";
         var t1 = o["first-article"].title;
         var t2 = o["second-article"].title;
+        console.log(o);
         return comparisonTemplate($.extend(helpers, {
             t1: t1,
             t2: t2,
             ratio: ratio,
             lda_cosine: o["lda-cosine-similarity"],
+            lda_l2_sim: o["lda-l2-similarity"],
             tspr_cosine: o["tspr-cosine-similarity"],
+            tspr_l2_sim: o["tspr-l2-similarity"]
         }));
     }
+    
+    var knnTemplate = _.template(
+        "<h2> The Nearest Neighbors of <%= source.title %> </h2>" +
+        "<table class='table table-striped'>" +
+            "<thead>" +
+                "<tr><th> # </th> <th> Neighbor </th></tr>" +
+            "</thead>" +
+            "<tbody>" +
+            "<% _.each(neighbors, function(article) { %>" +
+                "<tr>" +
+                    "<td> <%= article.position %> </td> <td> <%= wikilink(article.title)%> </td>" +
+                "</tr>" +
+            "<% }); %>" +
+            "</tbody>" +
+        "</table>"
+    );
+
+    function renderKnn(o) {
+        if(o.neighbors.length === 0) {
+            return "No results found";
+        }
+
+        var neighbor;
+        var source = o["source-article"];
+        for(var i = 0; i < o.neighbors.length; i++) {
+            neighbor = o.neighbors[i];
+            neighbor.position = i+1;
+        }
+
+        return knnTemplate($.extend(helpers, {
+            source: source,
+            neighbors: o.neighbors,
+        }));
+    }
+
 
     var topKTemplate = _.template(
         "<h2> The Top <%= infobox %> </h2>" +
@@ -134,27 +182,34 @@ $(document).ready(function() {
     $("#query-form").submit(function() {
         $("#result").html("");
         spinner.spin(document.getElementById("result"));
-        $.get("/query", {query: $("#query").val()}, function(data) {
-            console.log(data);
-            var renderFn; 
-            if(data && data.type) {
-                switch(data.type) {
-                    case "compare": 
-                        renderFn = renderComparison;
-                        break;
-                    case "top_k":
-                        renderFn = renderTopK;
-                        break;
-                }
+        $.get("/query", {query: $("#query").val()})
+            .done(function(data) {
+                var renderFn; 
+                if(data && data.type) {
+                    switch(data.type) {
+                        case "compare": 
+                            renderFn = renderComparison;
+                            break;
+                        case "top_k":
+                            renderFn = renderTopK;
+                            break;
+                        case "knn":
+                            renderFn = renderKnn;
+                            break;
+                    }
 
-                spinner.stop();
-                if(renderFn) {
-                    $("#result").html(renderFn(data));
-                } else {
-                    $("#result").html("Error :(");
+                    spinner.stop();
+                    if(renderFn) {
+                        $("#result").html(renderFn(data));
+                    } else {
+                        $("#result").html("Error finding render function :(");
+                    }
                 }
-            }
-        });
+            })
+            .fail(function() {
+                spinner.stop();
+                $("#result").html("Error response :(");
+            });
         return false;
     });
 });
