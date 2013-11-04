@@ -42,9 +42,9 @@
   (let
     [cap-link (cap-case link-text)]
     (or
-      (title-map link)
+      (title-map link-text)
       (title-map cap-link)
-      (title-map (redirect-map link))
+      (title-map (redirect-map link-text))
       (title-map (redirect-map cap-link))
       ))
   )
