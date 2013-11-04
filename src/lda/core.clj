@@ -36,9 +36,18 @@
     )
 
 
+(defn cap-case [title] (str (string/upper-case (subs title 0 1)) (subs title 1)))
+
 (defn link-text-to-id [^String link-text redirect-map title-map]
-  (title-map (if-let [redirected (redirect-map link-text)] redirected link-text))
-)
+  (let
+    [cap-link (cap-case link-text)]
+    (or
+      (title-map link)
+      (title-map cap-link)
+      (title-map (redirect-map link))
+      (title-map (redirect-map cap-link))
+      ))
+  )
 
 (defn dump-file-iterator [^String input-file] (iterator-seq (WikipediaHandler/newStructuredDumpIterator input-file)))
 
