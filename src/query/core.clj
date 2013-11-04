@@ -141,6 +141,7 @@
    :infobox (.getInfoboxType n)
    :lda (into [] (.getLdaList n))
    :tspr (into [] (.getTsprList n))
+   :lspr (into [] (.getLsprList n))
   }
 )
 

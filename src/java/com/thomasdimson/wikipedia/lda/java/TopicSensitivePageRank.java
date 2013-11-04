@@ -424,17 +424,12 @@ public class TopicSensitivePageRank {
 
 
             for(IntermediateTSPRNode node : nodes) {
-                node.tspr[topicNum] = thisRank[node.linearId];
+                node.lspr[topicNum] = thisRank[node.linearId];
             }
         }
     }
 
-
-    public static enum TSPRType {
-        TSPR,
-        LSPR
-    }
-    public static void rankInPlace(List<IntermediateTSPRNode> nodes, double convergence, TSPRType type) throws InterruptedException {
+    public static void rankInPlace(List<IntermediateTSPRNode> nodes, double convergence) throws InterruptedException {
         if(nodes.size() == 0) {
             return;
         }
@@ -457,11 +452,8 @@ public class TopicSensitivePageRank {
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 2);
         System.out.println("Nodes " + numNodes);
         for(int tnum = 0; tnum < numTopics; tnum++) {
-            if(type == TSPRType.TSPR) {
-                executorService.submit(new TsprInPlaceRunnable(nodeById, nodes, ldaSums[tnum], tnum, convergence));
-            } else {
-                executorService.submit(new LsprInPlaceRunnable(nodeById, nodes, ldaSums[tnum], tnum, convergence));
-            }
+            executorService.submit(new TsprInPlaceRunnable(nodeById, nodes, ldaSums[tnum], tnum, convergence));
+            executorService.submit(new LsprInPlaceRunnable(nodeById, nodes, ldaSums[tnum], tnum, convergence));
         }
         executorService.shutdown();
         executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
