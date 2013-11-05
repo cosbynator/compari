@@ -56,12 +56,20 @@ public class SimilarityUtils {
         return dot(n1.getTsprList(), n2.getTsprList()) / (norm(n1.getTsprList()) * norm(n2.getTsprList()));
     }
 
+    public static double cosineLSPR(Data.TSPRGraphNode n1, Data.TSPRGraphNode n2) {
+        return dot(n1.getLsprList(), n2.getLsprList()) / (norm(n1.getLsprList()) * norm(n2.getLsprList()));
+    }
+
     public static double l2LDA(Data.TSPRGraphNode n1, Data.TSPRGraphNode n2) {
         return l2(n1.getLdaList(), n2.getLdaList());
     }
 
     public static double l2TSPR(Data.TSPRGraphNode n1, Data.TSPRGraphNode n2) {
         return l2(n1.getTsprList(), n2.getTsprList());
+    }
+
+    public static double l2LSPR(Data.TSPRGraphNode n1, Data.TSPRGraphNode n2) {
+        return l2(n1.getLsprList(), n2.getLsprList());
     }
 
     public static List<Data.TSPRGraphNode> nearestNeighborsTSPRCosine(final Data.TSPRGraphNode source,
@@ -75,6 +83,19 @@ public class SimilarityUtils {
         };
 
         return Lists.newArrayList(byTSPRSim.greatestOf(nodes, limit));
+    }
+
+    public static List<Data.TSPRGraphNode> nearestNeighborsLSPRCosine(final Data.TSPRGraphNode source,
+                                                                      Iterator<Data.TSPRGraphNode> nodes,
+                                                         int limit) throws SQLException {
+        Ordering<Data.TSPRGraphNode> byLSPRSim = new Ordering<Data.TSPRGraphNode>() {
+            @Override
+            public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
+                return Double.compare(cosineLSPR(tsprGraphNode, source), cosineLSPR(tsprGraphNode2, source));
+            }
+        };
+
+        return Lists.newArrayList(byLSPRSim.greatestOf(nodes, limit));
     }
 
     public static List<Data.TSPRGraphNode> nearestNeighborsLDACosine(final Data.TSPRGraphNode source,
@@ -114,5 +135,18 @@ public class SimilarityUtils {
         };
 
         return Lists.newArrayList(byTSPRSim.greatestOf(nodes, limit));
+    }
+
+    public static List<Data.TSPRGraphNode> nearestNeighborsLSPRL2(final Data.TSPRGraphNode source,
+                                                                      Iterator<Data.TSPRGraphNode> nodes,
+                                                                      int limit) throws SQLException {
+        Ordering<Data.TSPRGraphNode> byLSPRSim = new Ordering<Data.TSPRGraphNode>() {
+            @Override
+            public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
+                return Double.compare(1.0 / l2LSPR(tsprGraphNode, source), 1.0 / l2LSPR(tsprGraphNode2, source));
+            }
+        };
+
+        return Lists.newArrayList(byLSPRSim.greatestOf(nodes, limit));
     }
 }

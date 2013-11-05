@@ -62,6 +62,8 @@ $(document).ready(function() {
             "<li>LDA-L2-Sim: <%= lda_l2_sim.toFixed(3) %>" +
             "<li>TSPR-Cosine: <%= (tspr_cosine * 100).toFixed(1) %>%" +
             "<li>TSPR-L2-Sim: <%= tspr_l2_sim.toFixed(3) %>" +
+            "<li>LSPR-Cosine: <%= (lspr_cosine * 100).toFixed(1) %>%" +
+            "<li>LSPR-L2-Sim: <%= lspr_l2_sim.toFixed(3) %>" +
         "</ul></p>"
     );
 
@@ -77,7 +79,9 @@ $(document).ready(function() {
             lda_cosine: o["lda-cosine-similarity"],
             lda_l2_sim: o["lda-l2-similarity"],
             tspr_cosine: o["tspr-cosine-similarity"],
-            tspr_l2_sim: o["tspr-l2-similarity"]
+            tspr_l2_sim: o["tspr-l2-similarity"],
+            lspr_cosine: o["lspr-cosine-similarity"],
+            lspr_l2_sim: o["lspr-l2-similarity"]
         }));
     }
     
@@ -144,13 +148,14 @@ $(document).ready(function() {
             topicFragment = "<p><strong>Topic</strong>: " + o["topic-words"].join(",") + "</p>";
         }
 
+        var features = o.features;
         var topic = o["topic-index"];
         var firstArticle = o.articles[0];
         var article;
         for(var i = 0; i < o.articles.length; i++) {
             article = o.articles[i];
             article.position = i+1;
-            article.relative = article.tspr[topic] / firstArticle.tspr[topic];
+            article.relative = article[features][topic] / firstArticle[features][topic];
         }
 
         return topKTemplate($.extend(helpers, {

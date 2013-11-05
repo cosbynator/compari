@@ -89,6 +89,31 @@ public class DBAccess {
         return false;
     }
 
+    public List<TSPRGraphNode> topByLSPRWithInfobox(int topic, String infobox, int limit) throws SQLException {
+        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles WHERE infobox=? ORDER BY lspr[?] DESC LIMIT ?");
+        st.setFetchSize(DEFAULT_CURSOR_SIZE);
+        try {
+            st.setString(1, infobox);
+            st.setInt(2, topic + 1);
+            st.setInt(3, limit);
+            return listQuery(st);
+        } finally {
+            st.close();
+        }
+    }
+
+    public List<TSPRGraphNode> topByLSPR(int topic, int limit) throws SQLException {
+        PreparedStatement st = conn.prepareStatement("SELECT * FROM articles ORDER BY lspr[?] DESC LIMIT ?");
+        st.setFetchSize(DEFAULT_CURSOR_SIZE);
+        try {
+            st.setInt(1, topic + 1);
+            st.setInt(2, limit);
+            return listQuery(st);
+        } finally {
+            st.close();
+        }
+    }
+
 
     public List<TSPRGraphNode> topByTSPRWithInfobox(int topic, String infobox, int limit) throws SQLException {
         PreparedStatement st = conn.prepareStatement("SELECT * FROM articles WHERE infobox=? ORDER BY tspr[?] DESC LIMIT ?");
@@ -158,7 +183,7 @@ public class DBAccess {
 
     public void insertTSPRGraphNodes(Iterator<TSPRGraphNode> nodes) throws SQLException {
         while(nodes.hasNext()) {
-            PreparedStatement st = conn.prepareStatement("INSERT INTO articles(id, title, infobox, lda, tspr) VALUES (?,?,?,?,?)");
+            PreparedStatement st = conn.prepareStatement("INSERT INTO articles(id, title, infobox, lda, tspr, lspr) VALUES (?,?,?,?,?,?)");
             try {
                 conn.setAutoCommit(false);
                 for(int i = 0; i < INSERT_BATCH_SIZE && nodes.hasNext(); i++) {
@@ -166,12 +191,14 @@ public class DBAccess {
 
                     Array ldaArray = conn.createArrayOf("float8", next.getLdaList().toArray());
                     Array tsprArray = conn.createArrayOf("float8", next.getTsprList().toArray());
+                    Array lsprArray = conn.createArrayOf("float8", next.getLsprList().toArray());
 
                     st.setLong(1, next.getId());
                     st.setString(2, next.getTitle());
                     st.setString(3, next.getInfoboxType());
                     st.setArray(4, ldaArray);
                     st.setArray(5, tsprArray);
+                    st.setArray(6, lsprArray);
                     st.addBatch();
                 }
                 st.executeBatch();
@@ -189,12 +216,14 @@ public class DBAccess {
         String infobox = rs.getString("infobox");
         Double[] lda = (Double[])rs.getArray("lda").getArray();
         Double[] tspr = (Double[])rs.getArray("tspr").getArray();
+        Double[] lspr = (Double[])rs.getArray("lspr").getArray();
         return TSPRGraphNode.newBuilder()
                 .setId(id)
                 .setTitle(title)
                 .setInfoboxType(infobox)
                 .addAllLda(Arrays.asList(lda))
                 .addAllTspr(Arrays.asList(tspr))
+                .addAllLspr(Arrays.asList(lspr))
                 .build();
     }
 }

@@ -350,15 +350,17 @@ public class TopicSensitivePageRank {
         final Map<Long, IntermediateTSPRNode> nodeById;
         final int numNodes;
         final double convergence;
+        final double followPrior;
         public LsprInPlaceRunnable(Map<Long, IntermediateTSPRNode> nodeById,
                                    List<IntermediateTSPRNode> nodes, double sum, int topicNum,
-                                   double convergence) {
+                                   double convergence, double followPrior) {
             this.nodeById = nodeById;
             this.nodes = nodes;
             this.sum = sum;
             this.topicNum = topicNum;
             this.numNodes = nodes.size();
             this.convergence = convergence;
+            this.followPrior = followPrior;
         }
 
         @Override
@@ -392,12 +394,12 @@ public class TopicSensitivePageRank {
                     double neighborSum = 0.0;
                     for(long targetId : node.edges)  {
                         IntermediateTSPRNode neighbor = nodeById.get(targetId);
-                        neighborSum += neighbor.lda[topicNum];
+                        neighborSum += followPrior + neighbor.lda[topicNum];
                     }
                     double coeff = BETA * lastRank[node.linearId] / neighborSum;
                     for(long targetId : node.edges)  {
                         IntermediateTSPRNode neighbor = nodeById.get(targetId);
-                        thisRank[neighbor.linearId] += coeff * neighbor.lda[topicNum];
+                        thisRank[neighbor.linearId] += coeff * (followPrior + neighbor.lda[topicNum]);
                     }
                 }
 
@@ -453,7 +455,7 @@ public class TopicSensitivePageRank {
         System.out.println("Nodes " + numNodes);
         for(int tnum = 0; tnum < numTopics; tnum++) {
             executorService.submit(new TsprInPlaceRunnable(nodeById, nodes, ldaSums[tnum], tnum, convergence));
-            executorService.submit(new LsprInPlaceRunnable(nodeById, nodes, ldaSums[tnum], tnum, convergence));
+            executorService.submit(new LsprInPlaceRunnable(nodeById, nodes, ldaSums[tnum], tnum, convergence, 0.15));
         }
         executorService.shutdown();
         executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);

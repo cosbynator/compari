@@ -26,12 +26,12 @@
       <S> = (similar_query|compare_query|topk_query) <query_endings>? 
       query_endings = sep* ('?'|'.'|'!')? sep*
 
-      feature_specializer = <sep>? <'*'> <'*'> ('tspr' | 'lda') 
+      feature_specializer = <sep>? <'*'> <'*'> ('tspr' | 'lda' | 'lspr')
       norm_specializer = <sep>? <'*'> <'*'> ('cosine' | 'l2') 
 
       compare_query = <'compare'> <sep> article_split (<sep> topic_refinement)?
       <article_split> = article_title <article_divider> article_title
-      article_divider = sep ('and' | 'to') sep
+      article_divider = sep ('and' | 'to' | 'with') sep
       
       similar_query = (<sim_question_phrase> <sep>)? <'similar'> (<sep> <'to'>)? <sep> article_title (feature_specializer | norm_specializer)*
       sim_question_phrase = question_word | question_word <sep> 'is'
@@ -125,10 +125,12 @@
 )
 
 (defn nearest-neighbors [source limit norm features]
-  (let [iterator (TopicSensitivePageRank/newTSPRGraphNodeIterator "data/full/lspr.dat")]
+  (let [iterator (TopicSensitivePageRank/newTSPRGraphNodeIterator "data/full/tspr_lspr.dat")]
     (cond
       (and (= :tspr features) (= :cosine norm))  (SimilarityUtils/nearestNeighborsTSPRCosine source iterator limit)
       (and (= :tspr features) (= :l2 norm)) (SimilarityUtils/nearestNeighborsTSPRL2 source iterator limit)
+      (and (= :lspr features) (= :cosine norm))  (SimilarityUtils/nearestNeighborsLSPRCosine source iterator limit)
+      (and (= :lspr features) (= :l2 norm)) (SimilarityUtils/nearestNeighborsLSPRL2 source iterator limit)
       (and (= :lda features) (= :cosine norm))  (SimilarityUtils/nearestNeighborsLDACosine source iterator limit)
       (and (= :lda features) (= :l2 norm))  (SimilarityUtils/nearestNeighborsLDAL2 source iterator limit)
     )
@@ -163,15 +165,19 @@
   (let [db (DBAccess.)
         limit 50
         topic-index (closest-topic db (:topics topk-template))
+        features (:features topk-template)
         ^String infobox (closest-infobox db (:infobox topk-template))
-        topk (if infobox 
-               (.topByTSPRWithInfobox db topic-index infobox limit)
-               (.topByTSPR db topic-index limit)
+        topk (cond 
+               (and infobox (= :tspr features))  (.topByTSPRWithInfobox db topic-index infobox limit)
+               (= :tspr features) (.topByTSPR db topic-index limit)
+               (and infobox (= :lspr features))  (.topByLSPRWithInfobox db topic-index infobox limit)
+               (= :lspr features) (.topByLSPR db topic-index limit)
               )
         ]
     {
      :type :top_k
      :infobox infobox
+     :features features
      :topic-index topic-index
      :topic-words (:topics topk-template)
      :articles (into [] (map graph-node-obj topk))
@@ -195,6 +201,8 @@
        :lda-l2-similarity (/ 1.0 (SimilarityUtils/l2LDA a1 a2))
        :tspr-cosine-similarity (SimilarityUtils/cosineTSPR a1 a2)
        :tspr-l2-similarity (/ 1.0 (SimilarityUtils/l2TSPR a1 a2))
+       :lspr-cosine-similarity (SimilarityUtils/cosineLSPR a1 a2)
+       :lspr-l2-similarity (/ 1.0 (SimilarityUtils/l2LSPR a1 a2))
        :ratio (/ (.getTspr a1 topic-index) (.getTspr a2 topic-index))
       }
     )
