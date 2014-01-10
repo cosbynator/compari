@@ -434,7 +434,7 @@ public class TopicSensitivePageRank {
 
     public static class LSPPRankInPlaceRunnable implements Runnable {
         final int topicNum;
-        final long anchorId;
+        final String anchorTitle;
         final List<IntermediateTSPRNode> nodes;
         final Map<Long, IntermediateTSPRNode> nodeById;
         final int numNodes;
@@ -442,12 +442,12 @@ public class TopicSensitivePageRank {
         final double followPrior;
         public LSPPRankInPlaceRunnable(Map<Long, IntermediateTSPRNode> nodeById,
                                        List<IntermediateTSPRNode> nodes,
-                                       long anchorId,
+                                       String anchorTitle,
                                        int topicNum,
                                        double convergence, double followPrior) {
             this.nodeById = nodeById;
             this.nodes = nodes;
-            this.anchorId = anchorId;
+            this.anchorTitle = anchorTitle;
             this.topicNum = topicNum;
             this.numNodes = nodes.size();
             this.convergence = convergence;
@@ -464,7 +464,7 @@ public class TopicSensitivePageRank {
                 if(iteration == 0) {
                     // Initialize
                     for(IntermediateTSPRNode node : nodes) {
-                        if(node.id == anchorId) {
+                        if(node.title.equals(anchorTitle)) {
                             lastRank[node.linearId] = 1.0;
                         } else {
                             lastRank[node.linearId] = 0.0;
@@ -506,7 +506,7 @@ public class TopicSensitivePageRank {
 
                 double difference = 0.0;
                 for(IntermediateTSPRNode node : nodes) {
-                    if(node.id == anchorId) {
+                    if(node.title.equals(anchorTitle)) {
                         thisRank[node.linearId] += (1.0 - topicSum);
                     }
                     // Calculate L1 difference too
@@ -528,7 +528,7 @@ public class TopicSensitivePageRank {
         }
     }
 
-    public static void lspprankInPlace(List<IntermediateTSPRNode> nodes, long anchorId, double convergence) throws InterruptedException {
+    public static void lspprankInPlace(List<IntermediateTSPRNode> nodes, String anchorTitle, double convergence) throws InterruptedException {
 
         if(nodes.size() == 0) {
             return;
@@ -546,7 +546,7 @@ public class TopicSensitivePageRank {
         ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 2);
         System.out.println("Nodes " + numNodes);
         for(int tnum = 0; tnum < numTopics; tnum++) {
-            executorService.submit(new LSPPRankInPlaceRunnable(nodeById, nodes, anchorId, tnum, convergence, 0.1));
+            executorService.submit(new LSPPRankInPlaceRunnable(nodeById, nodes, anchorTitle, tnum, convergence, 0.1));
         }
         executorService.shutdown();
         executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
