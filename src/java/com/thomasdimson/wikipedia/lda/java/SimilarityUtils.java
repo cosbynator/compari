@@ -4,6 +4,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Queues;
 import com.thomasdimson.wikipedia.Data;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
+import org.apache.commons.math3.stat.correlation.StorelessCovariance;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -70,6 +73,34 @@ public class SimilarityUtils {
 
     public static double l2LSPR(Data.TSPRGraphNode n1, Data.TSPRGraphNode n2) {
         return l2(n1.getLsprList(), n2.getLsprList());
+    }
+
+    public static List<Data.TSPRGraphNode> nearestNeighbors(final Data.TSPRGraphNode source,
+                                                            Iterator<Data.TSPRGraphNode> nodes,
+                                                            String features,
+                                                            String metric,
+                                                            int limit) throws SQLException {
+        if(features.equalsIgnoreCase("lda")) {
+            if(metric.equalsIgnoreCase("cosine")) {
+                return SimilarityUtils.nearestNeighborsLDACosine(source, nodes, limit);
+            } else if(metric.equalsIgnoreCase("l2")) {
+                return SimilarityUtils.nearestNeighborsLDAL2(source, nodes, limit);
+            }
+        } else if (features.equalsIgnoreCase("tspr")) {
+            if(metric.equalsIgnoreCase("cosine")) {
+                return SimilarityUtils.nearestNeighborsTSPRCosine(source, nodes, limit);
+            } else if(metric.equalsIgnoreCase("l2")) {
+                return SimilarityUtils.nearestNeighborsTSPRL2(source, nodes, limit);
+            }
+        } else if (features.equalsIgnoreCase("lspr")) {
+            if(metric.equalsIgnoreCase("cosine")) {
+                return SimilarityUtils.nearestNeighborsLSPRCosine(source, nodes, limit);
+            } else if(metric.equalsIgnoreCase("l2")) {
+                return SimilarityUtils.nearestNeighborsLSPRL2(source, nodes, limit);
+            }
+        }
+
+        throw new RuntimeException("Bad arguments " + features + "/" + metric);
     }
 
     public static List<Data.TSPRGraphNode> nearestNeighborsTSPRCosine(final Data.TSPRGraphNode source,
@@ -148,5 +179,25 @@ public class SimilarityUtils {
         };
 
         return Lists.newArrayList(byLSPRSim.greatestOf(nodes, limit));
+    }
+
+    public static StorelessCovariance[] covariances(Iterator<Data.TSPRGraphNode> nodes) {
+        StorelessCovariance lda = null;
+        StorelessCovariance tspr = null;
+        StorelessCovariance lspr = null;
+        while(nodes.hasNext()) {
+            Data.TSPRGraphNode node = nodes.next();
+            if(lda == null) {
+                lda = new StorelessCovariance(node.getLdaCount());
+                tspr = new StorelessCovariance(node.getTsprCount());
+                lspr = new StorelessCovariance(node.getLsprCount());
+            }
+
+            lda.increment(ArrayUtils.toPrimitive(node.getLdaList().toArray(new Double[node.getLdaCount()])));
+            tspr.increment(ArrayUtils.toPrimitive(node.getTsprList().toArray(new Double[node.getTsprCount()])));
+            lspr.increment(ArrayUtils.toPrimitive(node.getLsprList().toArray(new Double[node.getLsprCount()])));
+        }
+
+        return new StorelessCovariance[] {lda, tspr, lspr};
     }
 }

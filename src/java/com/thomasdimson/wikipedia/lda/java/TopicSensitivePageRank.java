@@ -290,15 +290,15 @@ public class TopicSensitivePageRank {
 
 
             for(int iteration = 0; ; iteration++) {
-                double []tmp = thisRank;
-                thisRank = lastRank;
-                lastRank = tmp;
                 if(iteration == 0) {
                     // Initialize
                     for(IntermediateTSPRNode node : nodes) {
-                        thisRank[node.linearId] = node.lda[topicNum] / sum;
+                        lastRank[node.linearId] = node.lda[topicNum] / sum;
                     }
                 } else {
+                    double []tmp = thisRank;
+                    thisRank = lastRank;
+                    lastRank = tmp;
                     // Clear old values
                     for(int i = 0; i < numNodes; i++) {
                         thisRank[i] = 0.0;
@@ -343,6 +343,7 @@ public class TopicSensitivePageRank {
         }
     }
 
+
     public static class LsprInPlaceRunnable implements Runnable {
         final double sum;
         final int topicNum;
@@ -370,15 +371,15 @@ public class TopicSensitivePageRank {
 
 
             for(int iteration = 0; ; iteration++) {
-                double []tmp = thisRank;
-                thisRank = lastRank;
-                lastRank = tmp;
                 if(iteration == 0) {
                     // Initialize
                     for(IntermediateTSPRNode node : nodes) {
-                        thisRank[node.linearId] = node.lda[topicNum] / sum;
+                        lastRank[node.linearId] = node.lda[topicNum] / sum;
                     }
                 } else {
+                    double []tmp = thisRank;
+                    thisRank = lastRank;
+                    lastRank = tmp;
                     // Clear old values
                     for(int i = 0; i < numNodes; i++) {
                         thisRank[i] = 0.0;
@@ -431,7 +432,128 @@ public class TopicSensitivePageRank {
         }
     }
 
+    public static class LSPPRankInPlaceRunnable implements Runnable {
+        final int topicNum;
+        final long anchorId;
+        final List<IntermediateTSPRNode> nodes;
+        final Map<Long, IntermediateTSPRNode> nodeById;
+        final int numNodes;
+        final double convergence;
+        final double followPrior;
+        public LSPPRankInPlaceRunnable(Map<Long, IntermediateTSPRNode> nodeById,
+                                       List<IntermediateTSPRNode> nodes,
+                                       long anchorId,
+                                       int topicNum,
+                                       double convergence, double followPrior) {
+            this.nodeById = nodeById;
+            this.nodes = nodes;
+            this.anchorId = anchorId;
+            this.topicNum = topicNum;
+            this.numNodes = nodes.size();
+            this.convergence = convergence;
+            this.followPrior = followPrior;
+        }
+
+        @Override
+        public void run() {
+            double [] lastRank = new double[numNodes];
+            double [] thisRank = new double[numNodes];
+
+
+            for(int iteration = 0; ; iteration++) {
+                if(iteration == 0) {
+                    // Initialize
+                    for(IntermediateTSPRNode node : nodes) {
+                        if(node.id == anchorId) {
+                            lastRank[node.linearId] = 1.0;
+                        } else {
+                            lastRank[node.linearId] = 0.0;
+                        }
+                    }
+                } else {
+                    double []tmp = thisRank;
+                    thisRank = lastRank;
+                    lastRank = tmp;
+                    // Clear old values
+                    for(int i = 0; i < numNodes; i++) {
+                        thisRank[i] = 0.0;
+                    }
+                }
+
+                // Power iteration
+                for(IntermediateTSPRNode node : nodes) {
+                    if(node.edges.length == 0) {
+                        continue;
+                    }
+
+                    double neighborSum = 0.0;
+                    for(long targetId : node.edges)  {
+                        IntermediateTSPRNode neighbor = nodeById.get(targetId);
+                        neighborSum += followPrior + neighbor.lda[topicNum];
+                    }
+                    double coeff = BETA * lastRank[node.linearId] / neighborSum;
+                    for(long targetId : node.edges)  {
+                        IntermediateTSPRNode neighbor = nodeById.get(targetId);
+                        thisRank[neighbor.linearId] += coeff * (followPrior + neighbor.lda[topicNum]);
+                    }
+                }
+
+                // Reinsert leaked
+                double topicSum = 0.0;
+                for(IntermediateTSPRNode node : nodes) {
+                    topicSum += thisRank[node.linearId];
+                }
+
+                double difference = 0.0;
+                for(IntermediateTSPRNode node : nodes) {
+                    if(node.id == anchorId) {
+                        thisRank[node.linearId] += (1.0 - topicSum);
+                    }
+                    // Calculate L1 difference too
+                    difference += Math.abs(thisRank[node.linearId] - lastRank[node.linearId]);
+                }
+
+                System.err.println("LSPRPPRank-sensitive PageRank " + topicNum + " iteration "
+                        + iteration + ": delta=" + difference);
+
+                if(difference < convergence) {
+                    break;
+                }
+            }
+
+
+            for(IntermediateTSPRNode node : nodes) {
+                node.lspr[topicNum] = thisRank[node.linearId];
+            }
+        }
+    }
+
+    public static void lspprankInPlace(List<IntermediateTSPRNode> nodes, long anchorId, double convergence) throws InterruptedException {
+
+        if(nodes.size() == 0) {
+            return;
+        }
+
+        final int numNodes = nodes.size();
+        final int numTopics = nodes.get(0).lda.length;
+
+        Map<Long, IntermediateTSPRNode> nodeById = Maps.newHashMapWithExpectedSize(nodes.size());
+
+        for(IntermediateTSPRNode node : nodes) {
+            nodeById.put(node.id, node);
+        }
+
+        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 2);
+        System.out.println("Nodes " + numNodes);
+        for(int tnum = 0; tnum < numTopics; tnum++) {
+            executorService.submit(new LSPPRankInPlaceRunnable(nodeById, nodes, anchorId, tnum, convergence, 0.1));
+        }
+        executorService.shutdown();
+        executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+    }
+
     public static void rankInPlace(List<IntermediateTSPRNode> nodes, double convergence) throws InterruptedException {
+
         if(nodes.size() == 0) {
             return;
         }

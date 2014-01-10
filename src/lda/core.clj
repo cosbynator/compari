@@ -84,6 +84,22 @@
   )
 )
 
+(defn lspprank [^String input-file ^String lda-file ^String output-file ^Long anchor-id ^Double convergence]
+  (let [
+         lda-map (dbg-b "Reading lda map" (TopicSensitivePageRank/readLDAMap lda-file))
+         intermediate-vector (dbg-b "Reading intermediate nodes" (java.util.ArrayList.
+                                                                   (make-intermediate-tspr-nodes input-file lda-map)))
+       ]
+    (do
+      (TopicSensitivePageRank/lspprankInPlace intermediate-vector anchor-id convergence)
+      (with-open [w (io/output-stream output-file)]
+        (doseq [^IntermediateTSPRNode node intermediate-vector]
+          (.writeDelimitedTo (.toProto node) w)
+      ))
+    )
+  )
+)
+
 (defn tspr [^String input-file ^String lda-file ^String output-file ^Double convergence]
   (let [
          lda-map (dbg-b "Reading lda map" (TopicSensitivePageRank/readLDAMap lda-file))

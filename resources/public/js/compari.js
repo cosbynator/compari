@@ -16,9 +16,11 @@ $(document).ready(function() {
         switch(parse.type) {
             case "knn":
                 start = "K-Nearest Neighbors of <em>" + parse["article-title"] + "</em>";
-                if(parse.features !== "tspr" || parse.norm !== "cosine") {
-                    start += "<small> using the " + parse.norm + " norm and " + parse.features + "</small>";
+                if(parse.infobox) {
+                    start += " with infobox <em>" + parse.infobox + "</em>";
                 }
+
+                start += "<small> using the " + parse.norm + " norm and " + parse.features + "</small>";
                 return start;
             case "compare":
                 start = "Comparing <em>" + parse["first-article-title"] + "</em>" + 
@@ -36,9 +38,7 @@ $(document).ready(function() {
                     start += " in the topic matching <em>" + parse.topics.join(" or ") + "</em>";
                 }
 
-                if(parse.features !== "tspr") {
-                       start += "<small> using " + parse.features + "</small>";
-                }
+                   start += "<small> using " + parse.features + "</small>";
                 return start;
             default:
                 return "No explanation";
@@ -143,6 +143,8 @@ $(document).ready(function() {
             return "No results found";
         }
 
+        console.dir(o);
+
         var topicFragment = "";
         if(o["topic-words"].length > 0) {
             topicFragment = "<p><strong>Topic</strong>: " + o["topic-words"].join(",") + "</p>";
@@ -155,7 +157,16 @@ $(document).ready(function() {
         for(var i = 0; i < o.articles.length; i++) {
             article = o.articles[i];
             article.position = i+1;
-            article.relative = article[features][topic] / firstArticle[features][topic];
+            if (features === 'x2') {
+                article.relative = (article.tspr[topic] - article.tspr[article.tspr.length -1]) / Math.sqrt(article.tspr[article.tspr.length -1]);
+            } else if (features === 'emass') {
+                article.relative = (article.lda[topic] * article.tspr[article.tspr.length -1]) / 
+                    (firstArticle.lda[topic] * firstArticle.tspr[firstArticle.tspr.length -1]);
+            } else {
+                article.relative = article[features][topic] / firstArticle[features][topic];
+            }
+
+            console.log(article.title + ": " + (article.lda[topic] * article.tspr[article.tspr.length -1]));
         }
 
         return topKTemplate($.extend(helpers, {

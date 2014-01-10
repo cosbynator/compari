@@ -11,6 +11,9 @@
                   [compojure "1.1.6"]
                   [hiccup "1.0.4"]
                   [clj-json "0.5.3"]
+                  [clojure-csv/clojure-csv "2.0.1"]
+
+                  [org.apache.commons/commons-math3 "3.2"]
 
                   [org.postgresql/postgresql "9.2-1003-jdbc4"]
                   [intervox/clj-progress "0.1.1"]
@@ -19,6 +22,7 @@
                   [com.google.protobuf/protobuf-java "2.4.1"]
                   [org.flatland/protobuf "0.7.1"]
                   [com.google.guava/guava "15.0"]
+                  [commons-dbutils/commons-dbutils "1.5"]
                   [org.apache.lucene/lucene-xercesImpl "3.5.0"]
                   [org.clojure/data.xml "0.0.7"]
                   [org.clojars.achim/multiset "0.1.0-SNAPSHOT"]

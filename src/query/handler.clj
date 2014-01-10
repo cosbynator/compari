@@ -32,16 +32,19 @@
     [:div {:class "container"}
       [:div {:class "jumbotron"}
         [:h1 "compari"]
+        [:h2 {:class "subtitle"} "comparison engine"]
         [:form {:id "query-form" :method "POST"}
           [:input {:type "text" :id "query" :name "query" :class "query"}]
           [:input {:type "submit" :id "query-submit" :class "query-submit" :value "Go" :disabled "disabled"}]
           [:p {:id "parse"} "&nbsp;"]
           [:p {:class "examples"} 
-           "What is similar to Albert Einstein?"
+           "What scientist is similar to Albert Einstein?"
            [:br]
            "Compare Bill Gates to Steve Jobs."
            [:br]
            "What is the best film related to Anime?"
+           [:br]
+           "Who is the best philosopher?"
           ]
 
         ]

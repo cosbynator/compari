@@ -14,6 +14,12 @@ p.examples {
     color: #777;
 }
 
+h2.subtitle {
+    font-variant: small-caps;
+    font-size: 14pt;
+    letter-spacing: 4px;
+}
+
 #parse {
     border-bottom: 1px solid #bbb;
     margin: 0 auto;
