@@ -224,6 +224,7 @@ public class TopicSensitivePageRank {
         }
     }
 
+
     public static Map<String, double[]> readLDAMap(String filename) throws IOException {
         BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(filename), Charset.forName("UTF-8")));
         String line;
