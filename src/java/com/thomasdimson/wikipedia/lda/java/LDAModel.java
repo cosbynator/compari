@@ -104,14 +104,15 @@ public class LDAModel {
                 }
 
                 w.write(Integer.toString(num));
-                w.write("\\t");
+                w.write("\t");
                 w.write(p.getTitle());
                 for(int i = 0; i < numTopics; i++) {
-                    w.write("\\t");
+                    w.write("\t");
                     w.write(Integer.toString(i));
-                    w.write("\\t");
+                    w.write("\t");
                     w.write(Double.toString(averages[i]));
                 }
+                w.write("\n");
 
                 num++;
             }
