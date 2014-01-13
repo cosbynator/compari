@@ -44,10 +44,10 @@
         eval-map (fn [candidates] (double (mean-average-precision (article-titles candidates) articles)))
        ]
     (do
-      (tee w "\tTSPR MAP: " (eval-map (SimilarityUtils/topByTSPRWithInfobox (git data-file) topic-index infobox limit)))
-      (tee w "\tLSPR MAP: " (eval-map (SimilarityUtils/topByLSPRWithInfobox (git data-file) topic-index infobox limit)))
-      (tee w "\tLDA MAP: " (eval-map (SimilarityUtils/topByLDAWithInfobox (git data-file) topic-index infobox limit)))
-      (tee w "\tEMass MAP: " (eval-map (SimilarityUtils/topByExpectedMassWithInfobox (git data-file) topic-index infobox limit)))
+      (tee w (str "\tTSPR MAP: " (eval-map (SimilarityUtils/topByTSPRWithInfobox (git data-file) topic-index infobox limit))))
+      (tee w (str "\tLSPR MAP: " (eval-map (SimilarityUtils/topByLSPRWithInfobox (git data-file) topic-index infobox limit))))
+      (tee w (str "\tLDA MAP: " (eval-map (SimilarityUtils/topByLDAWithInfobox (git data-file) topic-index infobox limit))))
+      (tee w (str "\tEMass MAP: " (eval-map (SimilarityUtils/topByExpectedMassWithInfobox (git data-file) topic-index infobox limit))))
     )
   ))
 
