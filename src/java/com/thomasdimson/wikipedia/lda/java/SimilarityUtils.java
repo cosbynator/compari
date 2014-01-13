@@ -1,5 +1,7 @@
 package com.thomasdimson.wikipedia.lda.java;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Queues;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 public class SimilarityUtils {
+    private static final int PAGERANK_INDEX = 200;
     public static double dot(List<Double> d1, List<Double> d2) {
         Iterator<Double> d1i = d1.iterator();
         Iterator<Double> d2i = d2.iterator();
@@ -179,6 +182,80 @@ public class SimilarityUtils {
         };
 
         return Lists.newArrayList(byLSPRSim.greatestOf(nodes, limit));
+    }
+
+    public static Iterator<Data.TSPRGraphNode> withInfobox(Iterator<Data.TSPRGraphNode> nodes, final String infobox) {
+        if(infobox == null) {
+            return nodes;
+        }
+
+        return Iterators.filter(nodes, new Predicate<Data.TSPRGraphNode>() {
+            @Override
+            public boolean apply(Data.TSPRGraphNode tsprGraphNode) {
+                return tsprGraphNode.getInfoboxType().equals(infobox);
+            }
+        });
+    }
+
+    public static List<Data.TSPRGraphNode> topByTSPRWithInfobox(Iterator<Data.TSPRGraphNode> nodes,
+                                                         final int topic,
+                                                         final String infobox,
+                                                         int limit) throws SQLException {
+
+        Ordering<Data.TSPRGraphNode> byTSPR = new Ordering<Data.TSPRGraphNode>() {
+            @Override
+            public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
+                return Double.compare(tsprGraphNode.getTspr(topic), tsprGraphNode2.getTspr(topic));
+            }
+        };
+
+        return Lists.newArrayList(byTSPR.greatestOf(withInfobox(nodes, infobox), limit));
+    }
+
+    public static List<Data.TSPRGraphNode> topByLSPRWithInfobox(Iterator<Data.TSPRGraphNode> nodes,
+                                                         final int topic,
+                                                         final String infobox,
+                                                         int limit) throws SQLException {
+
+        Ordering<Data.TSPRGraphNode> byLSPR = new Ordering<Data.TSPRGraphNode>() {
+            @Override
+            public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
+                return Double.compare(tsprGraphNode.getLspr(topic), tsprGraphNode2.getLspr(topic));
+            }
+        };
+
+        return Lists.newArrayList(byLSPR.greatestOf(withInfobox(nodes, infobox), limit));
+    }
+
+    public static List<Data.TSPRGraphNode> topByLDAWithInfobox(Iterator<Data.TSPRGraphNode> nodes,
+                                                         final int topic,
+                                                         final String infobox,
+                                                         int limit) throws SQLException {
+
+        Ordering<Data.TSPRGraphNode> byLDA = new Ordering<Data.TSPRGraphNode>() {
+            @Override
+            public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
+                return Double.compare(tsprGraphNode.getLda(topic), tsprGraphNode2.getLda(topic));
+            }
+        };
+
+        return Lists.newArrayList(byLDA.greatestOf(withInfobox(nodes, infobox), limit));
+    }
+
+    public static List<Data.TSPRGraphNode> topByExpectedMassWithInfobox(Iterator<Data.TSPRGraphNode> nodes,
+                                                        final int topic,
+                                                        final String infobox,
+                                                        int limit) throws SQLException {
+
+        Ordering<Data.TSPRGraphNode> byLDA = new Ordering<Data.TSPRGraphNode>() {
+            @Override
+            public int compare(Data.TSPRGraphNode tsprGraphNode, Data.TSPRGraphNode tsprGraphNode2) {
+                return Double.compare(tsprGraphNode.getLda(topic) * tsprGraphNode.getTspr(PAGERANK_INDEX)
+                                    , tsprGraphNode2.getLda(topic) * tsprGraphNode2.getTspr(PAGERANK_INDEX));
+            }
+        };
+
+        return Lists.newArrayList(byLDA.greatestOf(withInfobox(nodes, infobox), limit));
     }
 
     public static StorelessCovariance[] covariances(Iterator<Data.TSPRGraphNode> nodes) {
