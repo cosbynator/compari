@@ -52,7 +52,7 @@
   ))
 
 (defn evaluate-all [evaluation-output-file]
-  (with-open [^java.io.Writer w evaluation-output-file]
+  (with-open [w (writer evaluation-output-file)]
     (do
       (tee w "Top Anime Films - Document Probability")
       (evaluate-file "data/eval/top_anime_movies.txt" "data/tspr_lspr.dat" "film" anime-topic-index w)
