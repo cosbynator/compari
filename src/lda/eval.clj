@@ -22,7 +22,7 @@
 (defmacro dbg-b [str & body] `(do (println ~str) ~@body))
 (defmacro dbg-a [str & body] `(let [x# ~@body] (do (println ~str) x#)))
 (defmacro dbg [& body] `(let [x# ~@body] (do (println ) x#)))
-(defmacro tee [f s] (do (println s) (.write f s) (.flush f)))
+(defmacro tee [f s] `(do (println ~s) (.write ~f ~s) (.flush ~f)))
 
 (defn average [coll]  (if (= (count coll) 0) 0 (/ (reduce + coll) (count coll))))
 
@@ -38,7 +38,7 @@
 
 
 (defn git [f] (TopicSensitivePageRank/newTSPRGraphNodeIterator f))
-(defn evaluate-file [file-name data-file infobox topic-index w] 
+(defn evaluate-file [file-name data-file infobox topic-index ^java.io.Writer w] 
   (let [articles (string/split-lines (slurp file-name))
         limit 100
         eval-map (fn [candidates] (double (mean-average-precision (article-titles candidates) articles)))
@@ -52,7 +52,7 @@
   ))
 
 (defn evaluate-all [evaluation-output-file]
-  (with-open [w evaluation-output-file]
+  (with-open [^java.io.Writer w evaluation-output-file]
     (do
       (tee w "Top Anime Films - Document Probability")
       (evaluate-file "data/eval/top_anime_movies.txt" "data/tspr_lspr.dat" "film" anime-topic-index w)
