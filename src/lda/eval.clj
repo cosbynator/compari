@@ -3,9 +3,10 @@
   (:import com.thomasdimson.wikipedia.lda.java.SimilarityUtils)   
   (:import com.thomasdimson.wikipedia.lda.java.TopicSensitivePageRank)
 )
-(set! *warn-on-reflection* true)
-
+(use 'clojure.java.io)
 (require ['clojure.string :as 'str])
+
+(set! *warn-on-reflection* true)
 
 (def gold-physicists "data/eval/top_physicists.txt") ; http://worldohistory.blogspot.com/2008/08/50-most-influential-physicistsastronome.html
 (def gold-mathematicians "data/eval/top_mathematicians.txt") ; http://fabpedigree.com/james/mathmen.htm
@@ -21,6 +22,7 @@
 (defmacro dbg-b [str & body] `(do (println ~str) ~@body))
 (defmacro dbg-a [str & body] `(let [x# ~@body] (do (println ~str) x#)))
 (defmacro dbg [& body] `(let [x# ~@body] (do (println ) x#)))
+(defmacro tee [f s] (do (println s) (.write f s) (.flush f)))
 
 (defn average [coll]  (if (= (count coll) 0) 0 (/ (reduce + coll) (count coll))))
 
@@ -36,39 +38,41 @@
 
 
 (defn git [f] (TopicSensitivePageRank/newTSPRGraphNodeIterator f))
-(defn evaluate-file [file-name data-file infobox topic-index] 
+(defn evaluate-file [file-name data-file infobox topic-index w] 
   (let [articles (str/split-lines (slurp file-name))
         limit 100
         eval-map (fn [candidates] (double (mean-average-precision (article-titles candidates) articles)))
        ]
     (do
-      (println "\tTSPR MAP: " (eval-map (SimilarityUtils/topByTSPRWithInfobox (git data-file) topic-index infobox limit)))
-      (println "\tLSPR MAP: " (eval-map (SimilarityUtils/topByLSPRWithInfobox (git data-file) topic-index infobox limit)))
-      (println "\tLDA MAP: " (eval-map (SimilarityUtils/topByLDAWithInfobox (git data-file) topic-index infobox limit)))
-      (println "\tEMass MAP: " (eval-map (SimilarityUtils/topByExpectedMassWithInfobox (git data-file) topic-index infobox limit)))
+      (tee w "\tTSPR MAP: " (eval-map (SimilarityUtils/topByTSPRWithInfobox (git data-file) topic-index infobox limit)))
+      (tee w "\tLSPR MAP: " (eval-map (SimilarityUtils/topByLSPRWithInfobox (git data-file) topic-index infobox limit)))
+      (tee w "\tLDA MAP: " (eval-map (SimilarityUtils/topByLDAWithInfobox (git data-file) topic-index infobox limit)))
+      (tee w "\tEMass MAP: " (eval-map (SimilarityUtils/topByExpectedMassWithInfobox (git data-file) topic-index infobox limit)))
     )
   ))
 
-(defn evaluate-all []
-  (do
-    (println "Top Anime Films - Document Probability")
-    (evaluate-file "data/eval/top_anime_movies.txt" "data/tspr_lspr.dat" "film" anime-topic-index)
-    (println "Top Anime Films - Likelihood")
-    (evaluate-file "data/eval/top_anime_movies.txt" "data/tspr_lspr_likelihood.dat" "film" anime-topic-index)
+(defn evaluate-all [evaluation-output-file]
+  (with-open [w evaluation-output-file]
+    (do
+      (tee w "Top Anime Films - Document Probability")
+      (evaluate-file "data/eval/top_anime_movies.txt" "data/tspr_lspr.dat" "film" anime-topic-index w)
+      (tee w "Top Anime Films - Likelihood")
+      (evaluate-file "data/eval/top_anime_movies.txt" "data/tspr_lspr_likelihood.dat" "film" anime-topic-index w)
 
-    (println "Top Mathematicians - Document Probability")
-    (evaluate-file "data/eval/top_mathematicians.txt" "data/tspr_lspr.dat" "scientist" mathematics-index)
-    (println "Top Mathematicians - Likelihood")
-    (evaluate-file "data/eval/top_mathematicians.txt" "data/tspr_lspr_likelihood.dat" "scientist" mathematics-index)
+      (tee w "Top Mathematicians - Document Probability")
+      (evaluate-file "data/eval/top_mathematicians.txt" "data/tspr_lspr.dat" "scientist" mathematics-index w)
+      (tee w "Top Mathematicians - Likelihood")
+      (evaluate-file "data/eval/top_mathematicians.txt" "data/tspr_lspr_likelihood.dat" "scientist" mathematics-index w)
 
-    (println "Top Physicists - Document Probability")
-    (evaluate-file "data/eval/top_mathematicians.txt" "data/tspr_lspr.dat" "scientist" physics-index)
-    (println "Top Physicists - Likelihood")
-    (evaluate-file "data/eval/top_mathematicians.txt" "data/tspr_lspr_likelihood.dat" "scientist" physics-index)
+      (tee w "Top Physicists - Document Probability")
+      (evaluate-file "data/eval/top_mathematicians.txt" "data/tspr_lspr.dat" "scientist" physics-index w)
+      (tee w "Top Physicists - Likelihood")
+      (evaluate-file "data/eval/top_mathematicians.txt" "data/tspr_lspr_likelihood.dat" "scientist" physics-index w)
 
-    (println "Top Sci-Fi Films - Document Probability")
-    (evaluate-file "data/eval/top_scifi_movies.txt" "data/tspr_lspr.dat" "film" scifi-index)
-    (println "Top Sci-Fi Films - Likelihood")
-    (evaluate-file "data/eval/top_scifi_movies.txt" "data/tspr_lspr_likelihood.dat" "film" scifi-index)
-  )  
+      (tee w "Top Sci-Fi Films - Document Probability")
+      (evaluate-file "data/eval/top_scifi_movies.txt" "data/tspr_lspr.dat" "film" scifi-index w)
+      (tee w "Top Sci-Fi Films - Likelihood")
+      (evaluate-file "data/eval/top_scifi_movies.txt" "data/tspr_lspr_likelihood.dat" "film" scifi-index w)
+    )  
+  )
 )
