@@ -4,7 +4,7 @@
   (:import com.thomasdimson.wikipedia.lda.java.TopicSensitivePageRank)
 )
 (use 'clojure.java.io)
-(require ['clojure.string :as 'str])
+(require ['clojure.string :as 'string])
 
 (set! *warn-on-reflection* true)
 
@@ -39,7 +39,7 @@
 
 (defn git [f] (TopicSensitivePageRank/newTSPRGraphNodeIterator f))
 (defn evaluate-file [file-name data-file infobox topic-index w] 
-  (let [articles (str/split-lines (slurp file-name))
+  (let [articles (string/split-lines (slurp file-name))
         limit 100
         eval-map (fn [candidates] (double (mean-average-precision (article-titles candidates) articles)))
        ]
