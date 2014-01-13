@@ -22,7 +22,7 @@
 (defmacro dbg-b [str & body] `(do (println ~str) ~@body))
 (defmacro dbg-a [str & body] `(let [x# ~@body] (do (println ~str) x#)))
 (defmacro dbg [& body] `(let [x# ~@body] (do (println ) x#)))
-(defmacro tee [f s] `(do (println ~s) (.write ~f ~s) (.flush ~f)))
+(defmacro tee [f s] `(do (println ~s) (.write ~f (str ~s "\n")) (.flush ~f)))
 
 (defn average [coll]  (if (= (count coll) 0) 0 (/ (reduce + coll) (count coll))))
 
